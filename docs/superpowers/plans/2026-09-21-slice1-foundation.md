@@ -6,7 +6,7 @@
 
 **Architecture:** Next.js (App Router, TypeScript) with Tailwind, PostgreSQL via Prisma, two independent NextAuth v5 credential instances (Client vs StaffUser — separate cookies/sessions), next-intl for FR(default)/EN locale routing, and all mutations implemented as Server Actions that call small dependency-injected library functions (`(prisma, ...) => ...`) so business logic is testable against a real database without mocking Next.js internals.
 
-**Tech Stack:** Next.js (App Router) + TypeScript, Tailwind CSS, PostgreSQL + Prisma, NextAuth v5 (`next-auth@beta`), next-intl, bcryptjs, Zod, pnpm, Docker Compose (local Postgres), Vitest + React Testing Library (unit/component), Playwright (e2e).
+**Tech Stack:** Next.js (App Router) + TypeScript, Tailwind CSS, PostgreSQL + Prisma, NextAuth v5 (`next-auth@beta`), next-intl, bcryptjs, Zod, pnpm, native local PostgreSQL 18 service (Docker was unavailable on the dev machine — see Task 2), Vitest + React Testing Library (unit/component), Playwright (e2e).
 
 **Spec:** `docs/superpowers/specs/2026-09-21-slice1-foundation-design.md`
 
@@ -16,7 +16,7 @@
 - FR is the default locale, EN is secondary; every screen built in this slice needs both, with formal "vous" register in French copy.
 - Design tokens only: navy `#06171E`, neon green `#80FF4E` accent, serif headings, sans body — no ad hoc colors/fonts.
 - Package manager is pnpm.
-- Local Postgres runs via Docker Compose — no external account required to develop.
+- Local Postgres runs as a native Windows service (`postgresql-x64-18`), using a dedicated `espacecredit` role/database the user creates once — no external account required to develop. (Speced as Docker Compose originally; Docker was unavailable on the dev machine — see Task 2.)
 - Client and staff are **separate identity models** with separate NextAuth instances/cookies (`client-session-token`, `staff-session-token`).
 - Mutations go through Server Actions; no separate REST/API layer in this slice.
 - Role scoping: `AGENT` is view/search-only; only `SUPERVISOR`/`ADMIN` can approve or reject.
@@ -99,10 +99,9 @@ git commit -m "chore: scaffold Next.js app with design tokens"
 
 ---
 
-### Task 2: Docker Compose + Prisma schema + migration + client singleton
+### Task 2: Local Postgres setup + Prisma schema + migration + client singleton
 
 **Files:**
-- Create: `docker-compose.yml`
 - Create: `prisma/schema.prisma`
 - Create: `src/lib/prisma.ts`
 - Create: `prisma/migrations/<timestamp>_init/migration.sql` (generated, then hand-edited)
@@ -114,30 +113,22 @@ git commit -m "chore: scaffold Next.js app with design tokens"
 - Consumes: nothing new
 - Produces: `prisma` singleton client at `src/lib/prisma.ts` (default export named `prisma`, typed `PrismaClient`), and the full Prisma schema (`Client`, `StaffUser`, `LoanApplication`, `LoanScheduleEntry`, `Document`, `Payment`, `NotificationLog`, `AuditLog` models; `StaffRole`, `ApplicationStatus`, `ScheduleEntryStatus`, `ActorType` enums) that every later task's library functions import types from
 
-- [ ] **Step 1: Add Docker Compose for local Postgres**
+- [ ] **Step 1: Verify local Postgres is reachable**
 
-Create `docker-compose.yml`:
+Local dev uses a **native PostgreSQL 18 Windows service** (`postgresql-x64-18`), not Docker — Docker is not installed on this machine. The user has already created a dedicated role and database for this project by running, as the postgres superuser:
 
-```yaml
-services:
-  postgres:
-    image: postgres:16
-    restart: unless-stopped
-    environment:
-      POSTGRES_USER: espacecredit
-      POSTGRES_PASSWORD: espacecredit
-      POSTGRES_DB: espacecredit
-    ports:
-      - "5432:5432"
-    volumes:
-      - pgdata:/var/lib/postgresql/data
-volumes:
-  pgdata:
+```
+CREATE ROLE espacecredit WITH LOGIN PASSWORD 'espacecredit';
+CREATE DATABASE espacecredit OWNER espacecredit;
 ```
 
-Run: `docker compose up -d`
-Then verify: `docker compose exec postgres pg_isready`
-Expected: `accepting connections`
+Confirm the service is running and the `espacecredit` role/database are reachable with the project's own (non-superuser) credentials — do not use or ask for the postgres superuser password:
+
+```bash
+"/c/Program Files/PostgreSQL/18/bin/psql.exe" "postgresql://espacecredit:espacecredit@localhost:5432/espacecredit" -c "SELECT version();"
+```
+
+Expected: prints the PostgreSQL version with no auth error. If this fails, STOP and report BLOCKED — do not attempt to create the role/database yourself or fall back to Docker/SQLite.
 
 - [ ] **Step 2: Install Prisma and create `.env`**
 
@@ -417,13 +408,13 @@ describe('LoanApplication amount constraint', () => {
 - [ ] **Step 10: Run the test**
 
 Run: `pnpm test tests/integration/loan-amount-constraint.test.ts`
-Expected: both tests PASS (the DB must be up and migrated — verify `docker compose ps` shows postgres healthy if this fails).
+Expected: both tests PASS (the DB must be reachable and migrated — re-run the Step 1 `psql` check and confirm the `postgresql-x64-18` Windows service is running if this fails).
 
 - [ ] **Step 11: Commit**
 
 ```bash
 git add -A
-git commit -m "feat: add Prisma schema, Docker Compose Postgres, and amount range constraint"
+git commit -m "feat: add Prisma schema, native Postgres setup, and amount range constraint"
 ```
 
 ---
@@ -3906,7 +3897,7 @@ test('client applies, supervisor rejects, client sees the reason', async ({ brow
 
 - [ ] **Step 5: Run the e2e suite**
 
-Ensure Docker Postgres is up and migrated (`docker compose up -d`, `pnpm dlx prisma migrate deploy`), then:
+Ensure the native Postgres service is running and migrated (`pnpm dlx prisma migrate deploy`), then:
 
 Run: `pnpm test:e2e`
 Expected: both specs PASS.
