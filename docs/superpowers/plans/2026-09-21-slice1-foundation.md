@@ -304,7 +304,7 @@ if (process.env.NODE_ENV !== 'production') {
 - [ ] **Step 5: Generate the migration without applying it**
 
 ```bash
-pnpm dlx prisma migrate dev --name init --create-only
+pnpm exec prisma migrate dev --name init --create-only
 ```
 
 This creates `prisma/migrations/<timestamp>_init/migration.sql`.
@@ -321,7 +321,7 @@ ALTER TABLE "LoanApplication" ADD CONSTRAINT "loan_amount_range" CHECK ("amount"
 - [ ] **Step 7: Apply the migration and generate the client**
 
 ```bash
-pnpm dlx prisma migrate dev
+pnpm exec prisma migrate dev
 ```
 
 Expected: migration applies cleanly, Prisma Client is generated.
@@ -1860,8 +1860,8 @@ Add to `package.json`:
 }
 ```
 
-Run: `pnpm dlx prisma db seed`
-Expected: completes without error; verify with `pnpm dlx prisma studio` or a quick query that the three `StaffUser` rows exist.
+Run: `pnpm exec prisma db seed`
+Expected: completes without error; verify with `pnpm exec prisma studio` or a quick query that the three `StaffUser` rows exist.
 
 - [ ] **Step 9: Commit**
 
@@ -3792,7 +3792,7 @@ Add to `package.json` `"scripts"`:
 - [ ] **Step 3: Ensure staff accounts are seeded**
 
 ```bash
-pnpm dlx prisma db seed
+pnpm exec prisma db seed
 ```
 
 Expected: completes (it's an upsert, safe to re-run).
@@ -3901,7 +3901,7 @@ test('client applies, supervisor rejects, client sees the reason', async ({ brow
 
 - [ ] **Step 5: Run the e2e suite**
 
-Ensure the Neon Postgres project is reachable and migrated (`pnpm dlx prisma migrate deploy`), then:
+Ensure the Neon Postgres project is reachable and migrated (`pnpm exec prisma migrate deploy`), then:
 
 Run: `pnpm test:e2e`
 Expected: both specs PASS.
