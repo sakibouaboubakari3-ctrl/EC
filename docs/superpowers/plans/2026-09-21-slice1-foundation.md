@@ -3310,7 +3310,7 @@ git commit -m "feat: add status-label helper and admin case list"
 
 **Interfaces:**
 - Consumes: `generateAmortizationSchedule` (Task 4), `prisma` (Task 2), `staffAuth` (Task 8)
-- Produces: `decideApplication(prisma, input): Promise<void>` and `ForbiddenError` from `@/lib/applications/decide`, `input: { applicationId, staffId, staffRole, decision: 'APPROVED'|'REJECTED', reason? }` — rejects with `ForbiddenError` for `AGENT`, requires a non-empty `reason` for `REJECTED`, creates `LoanScheduleEntry` rows on `APPROVED`; consumed by the client dashboard (Task 17) via the resulting DB state, and the e2e test (Task 18)
+- Produces: `decideApplication(prisma, input): Promise<void>`, `ForbiddenError`, and `AlreadyDecidedError` from `@/lib/applications/decide`, `input: { applicationId, staffId, staffRole, decision: 'APPROVED'|'REJECTED', reason? }` — rejects with `ForbiddenError` for `AGENT`, requires a non-empty `reason` for `REJECTED`, rejects with `AlreadyDecidedError` if the application's status isn't `SUBMITTED`/`IN_REVIEW` (guards against re-deciding an already-approved/rejected application), creates `LoanScheduleEntry` rows on `APPROVED`; consumed by the client dashboard (Task 17) via the resulting DB state, and the e2e test (Task 18)
 
 - [ ] **Step 1: Write the failing test**
 
@@ -3319,7 +3319,7 @@ Create `tests/integration/decide.test.ts`:
 ```ts
 import { describe, it, expect, afterEach } from 'vitest';
 import { prisma } from '@/lib/prisma';
-import { decideApplication, ForbiddenError } from '@/lib/applications/decide';
+import { decideApplication, ForbiddenError, AlreadyDecidedError } from '@/lib/applications/decide';
 
 describe('decideApplication', () => {
   const email = 'decide-test@example.com';
@@ -3420,6 +3420,29 @@ describe('decideApplication', () => {
     const schedule = await prisma.loanScheduleEntry.findMany({ where: { applicationId: application.id } });
     expect(schedule).toHaveLength(0);
   });
+
+  it('forbids deciding an application that was already decided', async () => {
+    const application = await seedSubmittedApplication();
+    const staffId = await seedStaff();
+    await decideApplication(prisma, {
+      applicationId: application.id,
+      staffId,
+      staffRole: 'SUPERVISOR',
+      decision: 'APPROVED',
+    });
+
+    await expect(
+      decideApplication(prisma, {
+        applicationId: application.id,
+        staffId,
+        staffRole: 'SUPERVISOR',
+        decision: 'APPROVED',
+      })
+    ).rejects.toThrow(AlreadyDecidedError);
+
+    const schedule = await prisma.loanScheduleEntry.findMany({ where: { applicationId: application.id } });
+    expect(schedule).toHaveLength(12);
+  });
 });
 ```
 
@@ -3437,6 +3460,9 @@ import type { PrismaClient } from '@prisma/client';
 import { generateAmortizationSchedule } from '@/lib/amortization';
 
 export class ForbiddenError extends Error {}
+export class AlreadyDecidedError extends Error {}
+
+const DECIDABLE_STATUSES = ['SUBMITTED', 'IN_REVIEW'] as const;
 
 export interface DecideApplicationInput {
   applicationId: string;
@@ -3460,6 +3486,12 @@ export async function decideApplication(
   const application = await prisma.loanApplication.findUniqueOrThrow({
     where: { id: input.applicationId },
   });
+
+  if (!DECIDABLE_STATUSES.includes(application.status as (typeof DECIDABLE_STATUSES)[number])) {
+    throw new AlreadyDecidedError(
+      `Application ${input.applicationId} has already been decided (status: ${application.status})`
+    );
+  }
 
   await prisma.$transaction(async (tx) => {
     await tx.loanApplication.update({
@@ -3517,7 +3549,7 @@ Create `src/app/[locale]/admin/actions.ts`:
 import { redirect } from 'next/navigation';
 import { prisma } from '@/lib/prisma';
 import { staffAuth } from '@/lib/auth/staff-auth';
-import { decideApplication, ForbiddenError } from '@/lib/applications/decide';
+import { decideApplication, ForbiddenError, AlreadyDecidedError } from '@/lib/applications/decide';
 
 export async function decideAction(
   applicationId: string,
@@ -3542,6 +3574,9 @@ export async function decideAction(
   } catch (error) {
     if (error instanceof ForbiddenError) {
       redirect(`/admin/applications/${applicationId}?error=forbidden`);
+    }
+    if (error instanceof AlreadyDecidedError) {
+      redirect(`/admin/applications/${applicationId}?error=already-decided`);
     }
     throw error;
   }
