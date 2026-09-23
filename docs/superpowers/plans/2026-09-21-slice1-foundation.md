@@ -3775,7 +3775,6 @@ Create `src/app/[locale]/dashboard/page.tsx`:
 
 ```tsx
 import { redirect } from 'next/navigation';
-import { redirect } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { prisma } from '@/lib/prisma';
 import { clientAuth } from '@/lib/auth/client-auth';
