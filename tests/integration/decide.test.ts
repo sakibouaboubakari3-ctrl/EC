@@ -1,6 +1,6 @@
 import { describe, it, expect, afterEach } from 'vitest';
 import { prisma } from '@/lib/prisma';
-import { decideApplication, ForbiddenError } from '@/lib/applications/decide';
+import { decideApplication, ForbiddenError, AlreadyDecidedError } from '@/lib/applications/decide';
 
 describe('decideApplication', () => {
   const email = 'decide-test@example.com';
@@ -96,5 +96,28 @@ describe('decideApplication', () => {
 
     const schedule = await prisma.loanScheduleEntry.findMany({ where: { applicationId: application.id } });
     expect(schedule).toHaveLength(0);
+  });
+
+  it('forbids deciding an application that was already decided', async () => {
+    const application = await seedSubmittedApplication();
+    const staffId = await seedStaff('SUPERVISOR');
+    await decideApplication(prisma, {
+      applicationId: application.id,
+      staffId,
+      staffRole: 'SUPERVISOR',
+      decision: 'APPROVED',
+    });
+
+    await expect(
+      decideApplication(prisma, {
+        applicationId: application.id,
+        staffId,
+        staffRole: 'SUPERVISOR',
+        decision: 'APPROVED',
+      })
+    ).rejects.toThrow(AlreadyDecidedError);
+
+    const schedule = await prisma.loanScheduleEntry.findMany({ where: { applicationId: application.id } });
+    expect(schedule).toHaveLength(12);
   });
 });

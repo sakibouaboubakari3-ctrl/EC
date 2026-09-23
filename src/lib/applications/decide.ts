@@ -2,6 +2,9 @@ import type { PrismaClient } from '@prisma/client';
 import { generateAmortizationSchedule } from '@/lib/amortization';
 
 export class ForbiddenError extends Error {}
+export class AlreadyDecidedError extends Error {}
+
+const DECIDABLE_STATUSES = ['SUBMITTED', 'IN_REVIEW'] as const;
 
 export interface DecideApplicationInput {
   applicationId: string;
@@ -25,6 +28,12 @@ export async function decideApplication(
   const application = await prisma.loanApplication.findUniqueOrThrow({
     where: { id: input.applicationId },
   });
+
+  if (!DECIDABLE_STATUSES.includes(application.status as (typeof DECIDABLE_STATUSES)[number])) {
+    throw new AlreadyDecidedError(
+      `Application ${input.applicationId} has already been decided (status: ${application.status})`
+    );
+  }
 
   await prisma.$transaction(async (tx) => {
     await tx.loanApplication.update({

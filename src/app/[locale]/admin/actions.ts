@@ -3,7 +3,7 @@
 import { redirect } from 'next/navigation';
 import { prisma } from '@/lib/prisma';
 import { staffAuth } from '@/lib/auth/staff-auth';
-import { decideApplication, ForbiddenError } from '@/lib/applications/decide';
+import { decideApplication, ForbiddenError, AlreadyDecidedError } from '@/lib/applications/decide';
 
 export async function decideAction(
   applicationId: string,
@@ -28,6 +28,9 @@ export async function decideAction(
   } catch (error) {
     if (error instanceof ForbiddenError) {
       redirect(`/admin/applications/${applicationId}?error=forbidden`);
+    }
+    if (error instanceof AlreadyDecidedError) {
+      redirect(`/admin/applications/${applicationId}?error=already-decided`);
     }
     throw error;
   }
