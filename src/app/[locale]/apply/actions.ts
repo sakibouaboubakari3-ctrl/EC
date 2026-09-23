@@ -4,7 +4,11 @@ import { redirect } from 'next/navigation';
 import { prisma } from '@/lib/prisma';
 import { clientAuth } from '@/lib/auth/client-auth';
 import { getOrCreateDraftApplication, saveApplicationStep } from '@/lib/applications/draft';
-import { submitApplication as submitApplicationLib } from '@/lib/applications/submit';
+import {
+  submitApplication as submitApplicationLib,
+  AlreadySubmittedError,
+  type SubmitResult,
+} from '@/lib/applications/submit';
 
 async function requireClientId(): Promise<string> {
   const session = await clientAuth();
@@ -38,7 +42,15 @@ export async function submitApplicationAction(applicationId: string) {
   if (application.clientId !== clientId) {
     throw new Error('Forbidden');
   }
-  const result = await submitApplicationLib(prisma, applicationId);
+  let result: SubmitResult;
+  try {
+    result = await submitApplicationLib(prisma, applicationId);
+  } catch (error) {
+    if (error instanceof AlreadySubmittedError) {
+      redirect('/dashboard');
+    }
+    throw error;
+  }
   if (!result.ok) {
     redirect('/apply/review?error=validation');
   }

@@ -1,7 +1,7 @@
 import { describe, it, expect, afterEach } from 'vitest';
 import { prisma } from '@/lib/prisma';
 import { getOrCreateDraftApplication, saveApplicationStep } from '@/lib/applications/draft';
-import { submitApplication } from '@/lib/applications/submit';
+import { submitApplication, AlreadySubmittedError } from '@/lib/applications/submit';
 
 describe('submitApplication', () => {
   const email = 'submit-test@example.com';
@@ -66,5 +66,21 @@ describe('submitApplication', () => {
 
     const auditEntries = await prisma.auditLog.findMany({ where: { entityId: application.id } });
     expect(auditEntries).toHaveLength(0);
+  });
+
+  it('refuses to resubmit an application that is no longer DRAFT', async () => {
+    const client = await prisma.client.create({
+      data: { email, passwordHash: 'x', firstName: 'Ada', lastName: 'Lovelace' },
+    });
+    const application = await getOrCreateDraftApplication(prisma, client.id);
+    await saveApplicationStep(prisma, application.id, validStepData);
+
+    const result = await submitApplication(prisma, application.id);
+    expect(result).toEqual({ ok: true });
+
+    await expect(submitApplication(prisma, application.id)).rejects.toThrow(AlreadySubmittedError);
+
+    const auditEntries = await prisma.auditLog.findMany({ where: { entityId: application.id } });
+    expect(auditEntries).toHaveLength(1);
   });
 });
