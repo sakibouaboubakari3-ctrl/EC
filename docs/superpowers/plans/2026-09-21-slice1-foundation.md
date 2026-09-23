@@ -3667,21 +3667,21 @@ Create `src/app/[locale]/dashboard/page.tsx`:
 
 ```tsx
 import { redirect } from 'next/navigation';
+import { redirect } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { prisma } from '@/lib/prisma';
 import { clientAuth } from '@/lib/auth/client-auth';
 import { statusMessageKey } from '@/lib/status-label';
+import type { ApplicationStatus } from '@prisma/client';
 
-export default async function DashboardPage() {
+interface DashboardApplication {
+  status: ApplicationStatus;
+  decisionReason: string | null;
+  schedule: Array<{ id: string; dueDate: Date; amount: number }>;
+}
+
+function DashboardView({ application }: { application: DashboardApplication | null }) {
   const t = useTranslations();
-  const session = await clientAuth();
-  if (!session?.user?.id) redirect('/login');
-
-  const application = await prisma.loanApplication.findFirst({
-    where: { clientId: session.user.id, status: { not: 'DRAFT' } },
-    orderBy: { createdAt: 'desc' },
-    include: { schedule: { orderBy: { dueDate: 'asc' } } },
-  });
 
   if (!application) {
     return (
@@ -3724,7 +3724,22 @@ export default async function DashboardPage() {
     </main>
   );
 }
+
+export default async function DashboardPage() {
+  const session = await clientAuth();
+  if (!session?.user?.id) redirect('/login');
+
+  const application = await prisma.loanApplication.findFirst({
+    where: { clientId: session.user.id, status: { not: 'DRAFT' } },
+    orderBy: { createdAt: 'desc' },
+    include: { schedule: { orderBy: { dueDate: 'asc' } } },
+  });
+
+  return <DashboardView application={application} />;
+}
 ```
+
+(`useTranslations()` is called inside the non-async `DashboardView`, not directly in the async `DashboardPage`. Task 13's implementation hit a real "Invalid hook call" failure calling `useTranslations()` directly in an async Server Component under the test pattern below — `await Page()` invokes the function fully outside any React render pass, so the hook dispatcher is null. Rendering `<DashboardView .../>` as a JSX element lets React actually invoke it during the real render. This mirrors the Page→Form delegation Task 12 already used, applied here for testability rather than interactivity.)
 
 - [ ] **Step 4: Run test to verify it passes**
 
