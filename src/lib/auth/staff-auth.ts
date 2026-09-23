@@ -11,7 +11,6 @@ export const {
   signOut: staffSignOut,
 } = NextAuth({
   basePath: '/api/auth/staff',
-  trustHost: true,
   session: { strategy: 'jwt' },
   cookies: {
     sessionToken: {
