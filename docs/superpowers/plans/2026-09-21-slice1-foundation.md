@@ -3323,12 +3323,14 @@ import { decideApplication, ForbiddenError } from '@/lib/applications/decide';
 
 describe('decideApplication', () => {
   const email = 'decide-test@example.com';
+  const staffEmail = 'decide-test-staff@example.com';
 
   afterEach(async () => {
     await prisma.auditLog.deleteMany({ where: { entityType: 'LoanApplication' } });
     await prisma.loanScheduleEntry.deleteMany({ where: { application: { client: { email } } } });
     await prisma.loanApplication.deleteMany({ where: { client: { email } } });
     await prisma.client.deleteMany({ where: { email } });
+    await prisma.staffUser.deleteMany({ where: { email: staffEmail } });
   });
 
   async function seedSubmittedApplication() {
@@ -3347,6 +3349,17 @@ describe('decideApplication', () => {
     });
   }
 
+  // decidedByStaffId is a real FK to StaffUser.id — only needed for the two
+  // cases that actually reach the write path (approve, reject-with-reason).
+  // The forbidden and missing-reason cases throw before any write, so a
+  // placeholder string is fine there and doesn't need a seeded row.
+  async function seedStaff() {
+    const staff = await prisma.staffUser.create({
+      data: { email: staffEmail, passwordHash: 'x', name: 'Test Staff', role: 'SUPERVISOR' },
+    });
+    return staff.id;
+  }
+
   it('forbids an AGENT from deciding', async () => {
     const application = await seedSubmittedApplication();
     await expect(
@@ -3361,16 +3374,17 @@ describe('decideApplication', () => {
 
   it('approves and generates a schedule for a SUPERVISOR', async () => {
     const application = await seedSubmittedApplication();
+    const staffId = await seedStaff();
     await decideApplication(prisma, {
       applicationId: application.id,
-      staffId: 'staff-1',
+      staffId,
       staffRole: 'SUPERVISOR',
       decision: 'APPROVED',
     });
 
     const updated = await prisma.loanApplication.findUniqueOrThrow({ where: { id: application.id } });
     expect(updated.status).toBe('APPROVED');
-    expect(updated.decidedByStaffId).toBe('staff-1');
+    expect(updated.decidedByStaffId).toBe(staffId);
 
     const schedule = await prisma.loanScheduleEntry.findMany({ where: { applicationId: application.id } });
     expect(schedule).toHaveLength(12);
@@ -3390,9 +3404,10 @@ describe('decideApplication', () => {
 
   it('rejects with a reason and does not generate a schedule', async () => {
     const application = await seedSubmittedApplication();
+    const staffId = await seedStaff();
     await decideApplication(prisma, {
       applicationId: application.id,
-      staffId: 'staff-1',
+      staffId,
       staffRole: 'ADMIN',
       decision: 'REJECTED',
       reason: 'Insufficient income',
