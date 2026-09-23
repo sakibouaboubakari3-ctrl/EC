@@ -29,15 +29,9 @@ export async function decideApplication(
     where: { id: input.applicationId },
   });
 
-  if (!DECIDABLE_STATUSES.includes(application.status as (typeof DECIDABLE_STATUSES)[number])) {
-    throw new AlreadyDecidedError(
-      `Application ${input.applicationId} has already been decided (status: ${application.status})`
-    );
-  }
-
   await prisma.$transaction(async (tx) => {
-    await tx.loanApplication.update({
-      where: { id: input.applicationId },
+    const { count } = await tx.loanApplication.updateMany({
+      where: { id: input.applicationId, status: { in: DECIDABLE_STATUSES } },
       data: {
         status: input.decision,
         decidedAt: new Date(),
@@ -45,6 +39,11 @@ export async function decideApplication(
         decisionReason: input.reason ?? null,
       },
     });
+    if (count !== 1) {
+      throw new AlreadyDecidedError(
+        `Application ${input.applicationId} has already been decided`
+      );
+    }
 
     if (input.decision === 'APPROVED') {
       const schedule = generateAmortizationSchedule(
