@@ -1,0 +1,72 @@
+{
+  "home": {
+    "title": "Welcome to EspaceCredit"
+  },
+  "common": {
+    "next": "Next",
+    "back": "Back",
+    "submit": "Submit",
+    "loading": "Loading..."
+  },
+  "simulator": {
+    "amountLabel": "Loan amount",
+    "termLabel": "Term",
+    "monthlyPayment": "Estimated monthly payment"
+  },
+  "auth": {
+    "loginTitle": "Log in",
+    "registerTitle": "Create an account",
+    "email": "Email",
+    "password": "Password",
+    "firstName": "First name",
+    "lastName": "Last name",
+    "loginButton": "Log in",
+    "registerButton": "Create account",
+    "invalidCredentials": "Invalid email or password",
+    "emailAlreadyRegistered": "This email is already registered"
+  },
+  "apply": {
+    "stepLoanDetails": "Loan details",
+    "stepPersonalInfo": "Personal information",
+    "stepEmployment": "Employment and income",
+    "stepReview": "Review",
+    "personal": {
+      "dateOfBirth": "Date of birth",
+      "address": "Address",
+      "city": "City",
+      "postalCode": "Postal code"
+    },
+    "employment": {
+      "employerName": "Employer name",
+      "monthlyIncome": "Monthly income",
+      "status": "Employment status",
+      "statusEmployed": "Employed",
+      "statusSelfEmployed": "Self-employed",
+      "statusUnemployed": "Unemployed",
+      "statusRetired": "Retired"
+    },
+    "review": {
+      "title": "Review your application",
+      "confirm": "Confirm and submit"
+    }
+  },
+  "dashboard": {
+    "title": "Your application",
+    "statusDraft": "Draft",
+    "statusSubmitted": "Submitted",
+    "statusInReview": "In review",
+    "statusApproved": "Approved",
+    "statusRejected": "Rejected",
+    "dueDate": "Due date",
+    "amount": "Amount"
+  },
+  "admin": {
+    "caseListTitle": "Cases",
+    "searchPlaceholder": "Search a client",
+    "statusFilter": "Status",
+    "detailTitle": "Application detail",
+    "approve": "Approve",
+    "reject": "Reject",
+    "reasonLabel": "Reason"
+  }
+}
