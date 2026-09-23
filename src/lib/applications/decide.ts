@@ -31,7 +31,7 @@ export async function decideApplication(
 
   await prisma.$transaction(async (tx) => {
     const { count } = await tx.loanApplication.updateMany({
-      where: { id: input.applicationId, status: { in: DECIDABLE_STATUSES } },
+      where: { id: input.applicationId, status: { in: [...DECIDABLE_STATUSES] } },
       data: {
         status: input.decision,
         decidedAt: new Date(),
