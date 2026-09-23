@@ -7,7 +7,11 @@ describe('decideApplication', () => {
   const staffEmail = 'decide-test-staff@example.com';
 
   afterEach(async () => {
-    await prisma.auditLog.deleteMany({ where: { entityType: 'LoanApplication' } });
+    const applications = await prisma.loanApplication.findMany({
+      where: { client: { email } },
+      select: { id: true },
+    });
+    await prisma.auditLog.deleteMany({ where: { entityId: { in: applications.map((a) => a.id) } } });
     await prisma.loanScheduleEntry.deleteMany({ where: { application: { client: { email } } } });
     await prisma.loanApplication.deleteMany({ where: { client: { email } } });
     await prisma.client.deleteMany({ where: { email } });
