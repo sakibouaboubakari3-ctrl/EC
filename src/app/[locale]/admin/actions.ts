@@ -1,6 +1,7 @@
 'use server';
 
 import { redirect } from 'next/navigation';
+import { revalidatePath } from 'next/cache';
 import { prisma } from '@/lib/prisma';
 import { staffAuth } from '@/lib/auth/staff-auth';
 import { decideApplication, ForbiddenError, AlreadyDecidedError } from '@/lib/applications/decide';
@@ -34,5 +35,11 @@ export async function decideAction(
     }
     throw error;
   }
+  // The redirect below targets the same route the staff member is already on.
+  // Next.js's client-side router cache would otherwise keep serving the
+  // pre-decision RSC payload for that route (stale approve/reject buttons)
+  // until a manual reload, since a bare redirect() does not invalidate it.
+  revalidatePath('/[locale]/admin/applications/[id]', 'page');
+  revalidatePath('/[locale]/admin', 'page');
   redirect(`/admin/applications/${applicationId}`);
 }
