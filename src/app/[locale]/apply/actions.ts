@@ -4,6 +4,7 @@ import { redirect } from 'next/navigation';
 import { prisma } from '@/lib/prisma';
 import { clientAuth } from '@/lib/auth/client-auth';
 import { getOrCreateDraftApplication, saveApplicationStep } from '@/lib/applications/draft';
+import { submitApplication as submitApplicationLib } from '@/lib/applications/submit';
 
 async function requireClientId(): Promise<string> {
   const session = await clientAuth();
@@ -29,4 +30,17 @@ export async function saveStepAction(
     throw new Error('Forbidden');
   }
   await saveApplicationStep(prisma, applicationId, stepData);
+}
+
+export async function submitApplicationAction(applicationId: string) {
+  const clientId = await requireClientId();
+  const application = await prisma.loanApplication.findUniqueOrThrow({ where: { id: applicationId } });
+  if (application.clientId !== clientId) {
+    throw new Error('Forbidden');
+  }
+  const result = await submitApplicationLib(prisma, applicationId);
+  if (!result.ok) {
+    redirect('/apply/review?error=validation');
+  }
+  redirect('/dashboard');
 }

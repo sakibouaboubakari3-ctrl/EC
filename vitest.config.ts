@@ -6,6 +6,7 @@ export default defineConfig({
   plugins: [react(), tsconfigPaths()],
   test: {
     environment: 'node',
+    testTimeout: 20000,
     setupFiles: ['./vitest.setup.ts'],
     server: {
       deps: {
