@@ -43,8 +43,17 @@ spec when their turn comes.
 - Tailwind CSS, design tokens per master prompt §3 (navy `#06171E`, neon
   green `#80FF4E`, serif headings / sans body) as CSS variables — no ad hoc
   colors/fonts
-- PostgreSQL + Prisma ORM; local dev via Docker Compose (no external account
-  required to start developing)
+- PostgreSQL + Prisma ORM. Local dev was speced to run Postgres via Docker
+  Compose (no external account required to start developing). During
+  implementation, Docker turned out not to be installed, and a subsequent
+  attempt to use the machine's native PostgreSQL 18 Windows service was
+  abandoned after repeated password/permission dead ends (no admin rights
+  to reset the postgres superuser password or restart the service). By
+  agreement with the user, local dev instead uses a free hosted Neon
+  Postgres project (a `DATABASE_URL` connection string in `.env`, not
+  committed) — the one deviation from "no external account required" in
+  this stack list, accepted because the local alternatives were blocked by
+  this specific machine's permissions, not by the architecture.
 - NextAuth.js, credentials provider, **two separate login flows**: `/login`
   (clients) and `/admin/login` (staff) — separate identity models so 2FA can
   be added to the staff flow later without touching client auth

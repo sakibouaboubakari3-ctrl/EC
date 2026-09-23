@@ -1,0 +1,14 @@
+@import "tailwindcss";
+
+:root {
+  --color-navy: #06171E;
+  --color-accent: #80FF4E;
+  --font-serif: "Century Schoolbook", Georgia, serif;
+  --font-sans: Calibri, Inter, sans-serif;
+}
+
+body {
+  background: #fff;
+  color: var(--color-navy);
+  font-family: var(--font-sans);
+}

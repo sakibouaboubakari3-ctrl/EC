@@ -1,0 +1,144 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum StaffRole {
+  AGENT
+  SUPERVISOR
+  ADMIN
+}
+
+enum ApplicationStatus {
+  DRAFT
+  SUBMITTED
+  IN_REVIEW
+  APPROVED
+  REJECTED
+}
+
+enum ScheduleEntryStatus {
+  UPCOMING
+  PAID
+  OVERDUE
+}
+
+enum ActorType {
+  CLIENT
+  STAFF
+}
+
+model Client {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  phone        String?
+  passwordHash String
+  firstName    String
+  lastName     String
+  locale       String   @default("fr")
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  applications LoanApplication[]
+}
+
+model StaffUser {
+  id           String    @id @default(cuid())
+  email        String    @unique
+  passwordHash String
+  name         String
+  role         StaffRole
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  decidedApplications LoanApplication[] @relation("DecidedBy")
+}
+
+model LoanApplication {
+  id               String            @id @default(cuid())
+  clientId         String
+  client           Client            @relation(fields: [clientId], references: [id])
+  amount           Int
+  termMonths       Int
+  rate             Float
+  status           ApplicationStatus @default(DRAFT)
+  formData         Json              @default("{}")
+  submittedAt      DateTime?
+  decidedAt        DateTime?
+  decidedByStaffId String?
+  decidedByStaff   StaffUser?        @relation("DecidedBy", fields: [decidedByStaffId], references: [id])
+  decisionReason   String?
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+
+  schedule  LoanScheduleEntry[]
+  documents Document[]
+  payments  Payment[]
+
+  @@index([clientId])
+  @@index([status])
+}
+
+model LoanScheduleEntry {
+  id            String              @id @default(cuid())
+  applicationId String
+  application   LoanApplication     @relation(fields: [applicationId], references: [id])
+  dueDate       DateTime
+  amount        Float
+  status        ScheduleEntryStatus @default(UPCOMING)
+  createdAt     DateTime            @default(now())
+
+  payments Payment[]
+
+  @@index([applicationId])
+}
+
+model Document {
+  id            String          @id @default(cuid())
+  applicationId String
+  application   LoanApplication @relation(fields: [applicationId], references: [id])
+  type          String
+  storageKey    String
+  uploadedAt    DateTime        @default(now())
+}
+
+model Payment {
+  id              String            @id @default(cuid())
+  scheduleEntryId String
+  scheduleEntry   LoanScheduleEntry @relation(fields: [scheduleEntryId], references: [id])
+  applicationId   String
+  application     LoanApplication   @relation(fields: [applicationId], references: [id])
+  amount          Float
+  status          String
+  provider        String?
+  providerRef     String?
+  paidAt          DateTime?
+  createdAt       DateTime          @default(now())
+}
+
+model NotificationLog {
+  id            String   @id @default(cuid())
+  recipientType String
+  recipientId   String
+  channel       String
+  template      String
+  sentAt        DateTime @default(now())
+  status        String
+}
+
+model AuditLog {
+  id         String    @id @default(cuid())
+  actorType  ActorType
+  actorId    String
+  action     String
+  entityType String
+  entityId   String
+  metadata   Json      @default("{}")
+  createdAt  DateTime  @default(now())
+
+  @@index([entityType, entityId])
+}

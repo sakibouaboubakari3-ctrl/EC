@@ -1,0 +1,73 @@
+{
+  "home": {
+    "title": "Bienvenue chez EspaceCredit"
+  },
+  "common": {
+    "next": "Suivant",
+    "back": "Retour",
+    "submit": "Soumettre",
+    "loading": "Chargement..."
+  },
+  "simulator": {
+    "amountLabel": "Montant du prêt",
+    "termLabel": "Durée",
+    "monthlyPayment": "Mensualité estimée"
+  },
+  "auth": {
+    "loginTitle": "Connexion",
+    "registerTitle": "Créer un compte",
+    "email": "Courriel",
+    "password": "Mot de passe",
+    "firstName": "Prénom",
+    "lastName": "Nom",
+    "loginButton": "Se connecter",
+    "registerButton": "Créer un compte",
+    "invalidCredentials": "Courriel ou mot de passe invalide",
+    "emailAlreadyRegistered": "Ce courriel est déjà utilisé"
+  },
+  "apply": {
+    "stepLoanDetails": "Détails du prêt",
+    "stepPersonalInfo": "Renseignements personnels",
+    "stepEmployment": "Emploi et revenus",
+    "stepReview": "Révision",
+    "personal": {
+      "dateOfBirth": "Date de naissance",
+      "address": "Adresse",
+      "city": "Ville",
+      "postalCode": "Code postal"
+    },
+    "employment": {
+      "employerName": "Nom de l'employeur",
+      "monthlyIncome": "Revenu mensuel",
+      "status": "Statut d'emploi",
+      "statusEmployed": "Salarié",
+      "statusSelfEmployed": "Travailleur autonome",
+      "statusUnemployed": "Sans emploi",
+      "statusRetired": "Retraité"
+    },
+    "review": {
+      "title": "Révisez votre demande",
+      "confirm": "Confirmer et soumettre"
+    }
+  },
+  "dashboard": {
+    "title": "Votre demande",
+    "statusDraft": "Brouillon",
+    "statusSubmitted": "Soumise",
+    "statusInReview": "En révision",
+    "statusApproved": "Approuvée",
+    "statusRejected": "Refusée",
+    "dueDate": "Échéance",
+    "amount": "Montant"
+  },
+  "admin": {
+    "clientColumn": "Client",
+    "caseListTitle": "Dossiers",
+    "searchPlaceholder": "Rechercher un client",
+    "statusFilter": "Statut",
+    "detailTitle": "Détail de la demande",
+    "approve": "Approuver",
+    "reject": "Refuser",
+    "reasonLabel": "Motif"
+  }
+}

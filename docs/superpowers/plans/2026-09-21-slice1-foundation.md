@@ -6,7 +6,7 @@
 
 **Architecture:** Next.js (App Router, TypeScript) with Tailwind, PostgreSQL via Prisma, two independent NextAuth v5 credential instances (Client vs StaffUser — separate cookies/sessions), next-intl for FR(default)/EN locale routing, and all mutations implemented as Server Actions that call small dependency-injected library functions (`(prisma, ...) => ...`) so business logic is testable against a real database without mocking Next.js internals.
 
-**Tech Stack:** Next.js (App Router) + TypeScript, Tailwind CSS, PostgreSQL + Prisma, NextAuth v5 (`next-auth@beta`), next-intl, bcryptjs, Zod, pnpm, Docker Compose (local Postgres), Vitest + React Testing Library (unit/component), Playwright (e2e).
+**Tech Stack:** Next.js (App Router) + TypeScript, Tailwind CSS, PostgreSQL + Prisma, NextAuth v5 (`next-auth@beta`), next-intl, bcryptjs, Zod, pnpm, native local PostgreSQL 18 service (Docker was unavailable on the dev machine — see Task 2), Vitest + React Testing Library (unit/component), Playwright (e2e).
 
 **Spec:** `docs/superpowers/specs/2026-09-21-slice1-foundation-design.md`
 
@@ -16,7 +16,7 @@
 - FR is the default locale, EN is secondary; every screen built in this slice needs both, with formal "vous" register in French copy.
 - Design tokens only: navy `#06171E`, neon green `#80FF4E` accent, serif headings, sans body — no ad hoc colors/fonts.
 - Package manager is pnpm.
-- Local Postgres runs via Docker Compose — no external account required to develop.
+- The database is a free hosted Neon Postgres project, connected via `DATABASE_URL` in `.env` (not committed). (Speced as local Docker Compose originally; Docker was unavailable on the dev machine and a native-Postgres-service fallback hit unresolvable local permission issues — see Task 2.)
 - Client and staff are **separate identity models** with separate NextAuth instances/cookies (`client-session-token`, `staff-session-token`).
 - Mutations go through Server Actions; no separate REST/API layer in this slice.
 - Role scoping: `AGENT` is view/search-only; only `SUPERVISOR`/`ADMIN` can approve or reject.
@@ -99,10 +99,9 @@ git commit -m "chore: scaffold Next.js app with design tokens"
 
 ---
 
-### Task 2: Docker Compose + Prisma schema + migration + client singleton
+### Task 2: Neon Postgres setup + Prisma schema + migration + client singleton
 
 **Files:**
-- Create: `docker-compose.yml`
 - Create: `prisma/schema.prisma`
 - Create: `src/lib/prisma.ts`
 - Create: `prisma/migrations/<timestamp>_init/migration.sql` (generated, then hand-edited)
@@ -114,38 +113,26 @@ git commit -m "chore: scaffold Next.js app with design tokens"
 - Consumes: nothing new
 - Produces: `prisma` singleton client at `src/lib/prisma.ts` (default export named `prisma`, typed `PrismaClient`), and the full Prisma schema (`Client`, `StaffUser`, `LoanApplication`, `LoanScheduleEntry`, `Document`, `Payment`, `NotificationLog`, `AuditLog` models; `StaffRole`, `ApplicationStatus`, `ScheduleEntryStatus`, `ActorType` enums) that every later task's library functions import types from
 
-- [ ] **Step 1: Add Docker Compose for local Postgres**
+- [ ] **Step 1: Verify the Neon Postgres project is reachable**
 
-Create `docker-compose.yml`:
+Local dev connects to a free hosted **Neon Postgres** project instead of a locally-run database — Docker was unavailable on the dev machine, and a native-Postgres-service fallback hit unresolvable local permission issues (no admin rights to reset the postgres superuser password or restart the service). The user already created the Neon project and a `.env` file with the real `DATABASE_URL` already exists at the repo root (gitignored, not committed) — do not overwrite it and do not ask for the credential again.
 
-```yaml
-services:
-  postgres:
-    image: postgres:16
-    restart: unless-stopped
-    environment:
-      POSTGRES_USER: espacecredit
-      POSTGRES_PASSWORD: espacecredit
-      POSTGRES_DB: espacecredit
-    ports:
-      - "5432:5432"
-    volumes:
-      - pgdata:/var/lib/postgresql/data
-volumes:
-  pgdata:
+Confirm it's present and reachable:
+
+```bash
+grep -q '^DATABASE_URL=' .env && echo "DATABASE_URL is set" || echo "MISSING"
 ```
 
-Run: `docker compose up -d`
-Then verify: `docker compose exec postgres pg_isready`
-Expected: `accepting connections`
+Expected: `DATABASE_URL is set`. If `.env` is missing or `DATABASE_URL` is empty, STOP and report BLOCKED — do not fall back to Docker, a native Postgres service, or SQLite, and do not attempt to create a database yourself. (You'll get a live connectivity check for free in Step 5, when `prisma migrate dev` connects to it.)
 
-- [ ] **Step 2: Install Prisma and create `.env`**
+- [ ] **Step 2: Install Prisma**
 
 ```bash
 pnpm add -D prisma
 pnpm add @prisma/client
-cp .env.example .env
 ```
+
+`.env` already exists with a real `DATABASE_URL` (see Step 1) — do not run `cp .env.example .env`, which would overwrite it with the placeholder.
 
 - [ ] **Step 3: Write the Prisma schema**
 
@@ -317,7 +304,7 @@ if (process.env.NODE_ENV !== 'production') {
 - [ ] **Step 5: Generate the migration without applying it**
 
 ```bash
-pnpm dlx prisma migrate dev --name init --create-only
+pnpm exec prisma migrate dev --name init --create-only
 ```
 
 This creates `prisma/migrations/<timestamp>_init/migration.sql`.
@@ -334,7 +321,7 @@ ALTER TABLE "LoanApplication" ADD CONSTRAINT "loan_amount_range" CHECK ("amount"
 - [ ] **Step 7: Apply the migration and generate the client**
 
 ```bash
-pnpm dlx prisma migrate dev
+pnpm exec prisma migrate dev
 ```
 
 Expected: migration applies cleanly, Prisma Client is generated.
@@ -417,13 +404,13 @@ describe('LoanApplication amount constraint', () => {
 - [ ] **Step 10: Run the test**
 
 Run: `pnpm test tests/integration/loan-amount-constraint.test.ts`
-Expected: both tests PASS (the DB must be up and migrated — verify `docker compose ps` shows postgres healthy if this fails).
+Expected: both tests PASS (the Neon project must be reachable and migrated — re-check `.env`'s `DATABASE_URL` and Neon project status if this fails).
 
 - [ ] **Step 11: Commit**
 
 ```bash
 git add -A
-git commit -m "feat: add Prisma schema, Docker Compose Postgres, and amount range constraint"
+git commit -m "feat: add Prisma schema, Neon Postgres setup, and amount range constraint"
 ```
 
 ---
@@ -1462,6 +1449,7 @@ Create `src/app/[locale]/login/actions.ts`:
 'use server';
 
 import { redirect } from 'next/navigation';
+import { AuthError } from 'next-auth';
 import { clientSignIn } from '@/lib/auth/client-auth';
 
 export async function clientLoginAction(formData: FormData) {
@@ -1470,8 +1458,11 @@ export async function clientLoginAction(formData: FormData) {
 
   try {
     await clientSignIn('credentials', { email, password, redirect: false });
-  } catch {
-    redirect('/login?error=invalid-credentials');
+  } catch (error) {
+    if (error instanceof AuthError) {
+      redirect('/login?error=invalid-credentials');
+    }
+    throw error;
   }
   // redirect() throws internally — this line only runs on success
   redirect('/apply/loan-details');
@@ -1734,6 +1725,7 @@ Create `src/app/[locale]/admin/login/actions.ts`:
 'use server';
 
 import { redirect } from 'next/navigation';
+import { AuthError } from 'next-auth';
 import { staffSignIn } from '@/lib/auth/staff-auth';
 
 export async function staffLoginAction(formData: FormData) {
@@ -1742,8 +1734,11 @@ export async function staffLoginAction(formData: FormData) {
 
   try {
     await staffSignIn('credentials', { email, password, redirect: false });
-  } catch {
-    redirect('/admin/login?error=invalid-credentials');
+  } catch (error) {
+    if (error instanceof AuthError) {
+      redirect('/admin/login?error=invalid-credentials');
+    }
+    throw error;
   }
   redirect('/admin');
 }
@@ -1865,8 +1860,8 @@ Add to `package.json`:
 }
 ```
 
-Run: `pnpm dlx prisma db seed`
-Expected: completes without error; verify with `pnpm dlx prisma studio` or a quick query that the three `StaffUser` rows exist.
+Run: `pnpm exec prisma db seed`
+Expected: completes without error; verify with `pnpm exec prisma studio` or a quick query that the three `StaffUser` rows exist.
 
 - [ ] **Step 9: Commit**
 
@@ -2364,7 +2359,7 @@ Expected: FAIL (module not found)
 Create `src/lib/applications/draft.ts`:
 
 ```ts
-import type { PrismaClient, LoanApplication } from '@prisma/client';
+import type { PrismaClient, LoanApplication, Prisma } from '@prisma/client';
 import { DEFAULT_LOAN_AMOUNT, DEFAULT_TERM_MONTHS, ANNUAL_INTEREST_RATE } from '@/lib/config/loan';
 
 export async function getOrCreateDraftApplication(
@@ -2402,10 +2397,12 @@ export async function saveApplicationStep(
   };
   return prisma.loanApplication.update({
     where: { id: applicationId },
-    data: { formData: mergedFormData },
+    data: { formData: mergedFormData as Prisma.InputJsonValue },
   });
 }
 ```
+
+(`as Prisma.InputJsonValue` is needed because Prisma Client 6.16.0 doesn't structurally accept a plain `Record<string, unknown>` spread for a `Json` field — no behavior change, just satisfies the type checker.)
 
 - [ ] **Step 4: Run test to verify it passes**
 
@@ -3202,18 +3199,29 @@ import { statusMessageKey } from '@/lib/status-label';
 import type { ApplicationStatus } from '@prisma/client';
 import { Link } from '@/i18n/navigation';
 
-export default async function AdminCaseListPage({
-  searchParams,
+interface CaseListParams {
+  status?: string;
+  name?: string;
+  page?: string;
+}
+
+interface CaseListApplication {
+  id: string;
+  amount: number;
+  status: ApplicationStatus;
+  client: { firstName: string; lastName: string };
+}
+
+function CaseListView({
+  params,
+  applications,
+  total,
 }: {
-  searchParams: Promise<{ status?: string; name?: string; page?: string }>;
+  params: CaseListParams;
+  applications: CaseListApplication[];
+  total: number;
 }) {
   const t = useTranslations();
-  const params = await searchParams;
-  const { applications, total } = await listApplications(prisma, {
-    status: params.status ? (params.status as ApplicationStatus) : undefined,
-    clientName: params.name,
-    page: params.page ? Number(params.page) : 1,
-  });
 
   return (
     <main className="p-8">
@@ -3259,7 +3267,24 @@ export default async function AdminCaseListPage({
     </main>
   );
 }
+
+export default async function AdminCaseListPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ status?: string; name?: string; page?: string }>;
+}) {
+  const params = await searchParams;
+  const { applications, total } = await listApplications(prisma, {
+    status: params.status ? (params.status as ApplicationStatus) : undefined,
+    clientName: params.name,
+    page: params.page ? Number(params.page) : 1,
+  });
+
+  return <CaseListView params={params} applications={applications} total={total} />;
+}
 ```
+
+(`useTranslations()` is called inside the non-async `CaseListView`, not directly in the async `AdminCaseListPage`. Tasks 13 and 14 both hit real failures — a test-only "Invalid hook call" and an actual `pnpm build` failure ("Expected a suspended thenable") — from calling `useTranslations()` directly inside an async Server Component. Applying the same async-loader/sync-view split proactively here and in Task 16 to avoid the same failure.)
 
 - [ ] **Step 10: Verify the build**
 
@@ -3285,7 +3310,7 @@ git commit -m "feat: add status-label helper and admin case list"
 
 **Interfaces:**
 - Consumes: `generateAmortizationSchedule` (Task 4), `prisma` (Task 2), `staffAuth` (Task 8)
-- Produces: `decideApplication(prisma, input): Promise<void>` and `ForbiddenError` from `@/lib/applications/decide`, `input: { applicationId, staffId, staffRole, decision: 'APPROVED'|'REJECTED', reason? }` — rejects with `ForbiddenError` for `AGENT`, requires a non-empty `reason` for `REJECTED`, creates `LoanScheduleEntry` rows on `APPROVED`; consumed by the client dashboard (Task 17) via the resulting DB state, and the e2e test (Task 18)
+- Produces: `decideApplication(prisma, input): Promise<void>`, `ForbiddenError`, and `AlreadyDecidedError` from `@/lib/applications/decide`, `input: { applicationId, staffId, staffRole, decision: 'APPROVED'|'REJECTED', reason? }` — rejects with `ForbiddenError` for `AGENT`, requires a non-empty `reason` for `REJECTED`, rejects with `AlreadyDecidedError` if the application's status isn't `SUBMITTED`/`IN_REVIEW` (guards against re-deciding an already-approved/rejected application), creates `LoanScheduleEntry` rows on `APPROVED`; consumed by the client dashboard (Task 17) via the resulting DB state, and the e2e test (Task 18)
 
 - [ ] **Step 1: Write the failing test**
 
@@ -3294,16 +3319,18 @@ Create `tests/integration/decide.test.ts`:
 ```ts
 import { describe, it, expect, afterEach } from 'vitest';
 import { prisma } from '@/lib/prisma';
-import { decideApplication, ForbiddenError } from '@/lib/applications/decide';
+import { decideApplication, ForbiddenError, AlreadyDecidedError } from '@/lib/applications/decide';
 
 describe('decideApplication', () => {
   const email = 'decide-test@example.com';
+  const staffEmail = 'decide-test-staff@example.com';
 
   afterEach(async () => {
     await prisma.auditLog.deleteMany({ where: { entityType: 'LoanApplication' } });
     await prisma.loanScheduleEntry.deleteMany({ where: { application: { client: { email } } } });
     await prisma.loanApplication.deleteMany({ where: { client: { email } } });
     await prisma.client.deleteMany({ where: { email } });
+    await prisma.staffUser.deleteMany({ where: { email: staffEmail } });
   });
 
   async function seedSubmittedApplication() {
@@ -3322,6 +3349,17 @@ describe('decideApplication', () => {
     });
   }
 
+  // decidedByStaffId is a real FK to StaffUser.id — only needed for the two
+  // cases that actually reach the write path (approve, reject-with-reason).
+  // The forbidden and missing-reason cases throw before any write, so a
+  // placeholder string is fine there and doesn't need a seeded row.
+  async function seedStaff() {
+    const staff = await prisma.staffUser.create({
+      data: { email: staffEmail, passwordHash: 'x', name: 'Test Staff', role: 'SUPERVISOR' },
+    });
+    return staff.id;
+  }
+
   it('forbids an AGENT from deciding', async () => {
     const application = await seedSubmittedApplication();
     await expect(
@@ -3336,16 +3374,17 @@ describe('decideApplication', () => {
 
   it('approves and generates a schedule for a SUPERVISOR', async () => {
     const application = await seedSubmittedApplication();
+    const staffId = await seedStaff();
     await decideApplication(prisma, {
       applicationId: application.id,
-      staffId: 'staff-1',
+      staffId,
       staffRole: 'SUPERVISOR',
       decision: 'APPROVED',
     });
 
     const updated = await prisma.loanApplication.findUniqueOrThrow({ where: { id: application.id } });
     expect(updated.status).toBe('APPROVED');
-    expect(updated.decidedByStaffId).toBe('staff-1');
+    expect(updated.decidedByStaffId).toBe(staffId);
 
     const schedule = await prisma.loanScheduleEntry.findMany({ where: { applicationId: application.id } });
     expect(schedule).toHaveLength(12);
@@ -3365,9 +3404,10 @@ describe('decideApplication', () => {
 
   it('rejects with a reason and does not generate a schedule', async () => {
     const application = await seedSubmittedApplication();
+    const staffId = await seedStaff();
     await decideApplication(prisma, {
       applicationId: application.id,
-      staffId: 'staff-1',
+      staffId,
       staffRole: 'ADMIN',
       decision: 'REJECTED',
       reason: 'Insufficient income',
@@ -3379,6 +3419,29 @@ describe('decideApplication', () => {
 
     const schedule = await prisma.loanScheduleEntry.findMany({ where: { applicationId: application.id } });
     expect(schedule).toHaveLength(0);
+  });
+
+  it('forbids deciding an application that was already decided', async () => {
+    const application = await seedSubmittedApplication();
+    const staffId = await seedStaff();
+    await decideApplication(prisma, {
+      applicationId: application.id,
+      staffId,
+      staffRole: 'SUPERVISOR',
+      decision: 'APPROVED',
+    });
+
+    await expect(
+      decideApplication(prisma, {
+        applicationId: application.id,
+        staffId,
+        staffRole: 'SUPERVISOR',
+        decision: 'APPROVED',
+      })
+    ).rejects.toThrow(AlreadyDecidedError);
+
+    const schedule = await prisma.loanScheduleEntry.findMany({ where: { applicationId: application.id } });
+    expect(schedule).toHaveLength(12);
   });
 });
 ```
@@ -3397,6 +3460,9 @@ import type { PrismaClient } from '@prisma/client';
 import { generateAmortizationSchedule } from '@/lib/amortization';
 
 export class ForbiddenError extends Error {}
+export class AlreadyDecidedError extends Error {}
+
+const DECIDABLE_STATUSES = ['SUBMITTED', 'IN_REVIEW'] as const;
 
 export interface DecideApplicationInput {
   applicationId: string;
@@ -3420,6 +3486,12 @@ export async function decideApplication(
   const application = await prisma.loanApplication.findUniqueOrThrow({
     where: { id: input.applicationId },
   });
+
+  if (!DECIDABLE_STATUSES.includes(application.status as (typeof DECIDABLE_STATUSES)[number])) {
+    throw new AlreadyDecidedError(
+      `Application ${input.applicationId} has already been decided (status: ${application.status})`
+    );
+  }
 
   await prisma.$transaction(async (tx) => {
     await tx.loanApplication.update({
@@ -3477,7 +3549,7 @@ Create `src/app/[locale]/admin/actions.ts`:
 import { redirect } from 'next/navigation';
 import { prisma } from '@/lib/prisma';
 import { staffAuth } from '@/lib/auth/staff-auth';
-import { decideApplication, ForbiddenError } from '@/lib/applications/decide';
+import { decideApplication, ForbiddenError, AlreadyDecidedError } from '@/lib/applications/decide';
 
 export async function decideAction(
   applicationId: string,
@@ -3503,6 +3575,9 @@ export async function decideAction(
     if (error instanceof ForbiddenError) {
       redirect(`/admin/applications/${applicationId}?error=forbidden`);
     }
+    if (error instanceof AlreadyDecidedError) {
+      redirect(`/admin/applications/${applicationId}?error=already-decided`);
+    }
     throw error;
   }
   redirect(`/admin/applications/${applicationId}`);
@@ -3518,22 +3593,26 @@ import { notFound } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { prisma } from '@/lib/prisma';
 import { decideAction } from '../../actions';
+import type { ApplicationStatus } from '@prisma/client';
 
-export default async function ApplicationDetailPage({
-  params,
+interface DetailApplication {
+  id: string;
+  amount: number;
+  termMonths: number;
+  status: ApplicationStatus;
+  client: { email: string };
+}
+
+function ApplicationDetailView({
+  application,
+  approveAction,
+  rejectAction,
 }: {
-  params: Promise<{ id: string }>;
+  application: DetailApplication;
+  approveAction: (formData: FormData) => Promise<void>;
+  rejectAction: (formData: FormData) => Promise<void>;
 }) {
   const t = useTranslations();
-  const { id } = await params;
-  const application = await prisma.loanApplication.findUnique({
-    where: { id },
-    include: { client: true },
-  });
-  if (!application) notFound();
-
-  const approveAction = decideAction.bind(null, application.id, 'APPROVED');
-  const rejectAction = decideAction.bind(null, application.id, 'REJECTED');
   const isDecidable = application.status === 'SUBMITTED' || application.status === 'IN_REVIEW';
 
   return (
@@ -3576,7 +3655,33 @@ export default async function ApplicationDetailPage({
     </main>
   );
 }
+
+export default async function ApplicationDetailPage({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
+  const { id } = await params;
+  const application = await prisma.loanApplication.findUnique({
+    where: { id },
+    include: { client: true },
+  });
+  if (!application) notFound();
+
+  const approveAction = decideAction.bind(null, application.id, 'APPROVED');
+  const rejectAction = decideAction.bind(null, application.id, 'REJECTED');
+
+  return (
+    <ApplicationDetailView
+      application={application}
+      approveAction={approveAction}
+      rejectAction={rejectAction}
+    />
+  );
+}
 ```
+
+(`useTranslations()` is called inside the non-async `ApplicationDetailView`, not directly in the async `ApplicationDetailPage` — same async-loader/sync-view split applied to Task 15's admin case list, for the same reason: Tasks 13 and 14 both hit real failures calling `useTranslations()` directly inside an async Server Component.)
 
 - [ ] **Step 7: Verify the build**
 
@@ -3674,17 +3779,16 @@ import { useTranslations } from 'next-intl';
 import { prisma } from '@/lib/prisma';
 import { clientAuth } from '@/lib/auth/client-auth';
 import { statusMessageKey } from '@/lib/status-label';
+import type { ApplicationStatus } from '@prisma/client';
 
-export default async function DashboardPage() {
+interface DashboardApplication {
+  status: ApplicationStatus;
+  decisionReason: string | null;
+  schedule: Array<{ id: string; dueDate: Date; amount: number }>;
+}
+
+function DashboardView({ application }: { application: DashboardApplication | null }) {
   const t = useTranslations();
-  const session = await clientAuth();
-  if (!session?.user?.id) redirect('/login');
-
-  const application = await prisma.loanApplication.findFirst({
-    where: { clientId: session.user.id, status: { not: 'DRAFT' } },
-    orderBy: { createdAt: 'desc' },
-    include: { schedule: { orderBy: { dueDate: 'asc' } } },
-  });
 
   if (!application) {
     return (
@@ -3727,7 +3831,22 @@ export default async function DashboardPage() {
     </main>
   );
 }
+
+export default async function DashboardPage() {
+  const session = await clientAuth();
+  if (!session?.user?.id) redirect('/login');
+
+  const application = await prisma.loanApplication.findFirst({
+    where: { clientId: session.user.id, status: { not: 'DRAFT' } },
+    orderBy: { createdAt: 'desc' },
+    include: { schedule: { orderBy: { dueDate: 'asc' } } },
+  });
+
+  return <DashboardView application={application} />;
+}
 ```
+
+(`useTranslations()` is called inside the non-async `DashboardView`, not directly in the async `DashboardPage`. Task 13's implementation hit a real "Invalid hook call" failure calling `useTranslations()` directly in an async Server Component under the test pattern below — `await Page()` invokes the function fully outside any React render pass, so the hook dispatcher is null. Rendering `<DashboardView .../>` as a JSX element lets React actually invoke it during the real render. This mirrors the Page→Form delegation Task 12 already used, applied here for testability rather than interactivity.)
 
 - [ ] **Step 4: Run test to verify it passes**
 
@@ -3797,7 +3916,7 @@ Add to `package.json` `"scripts"`:
 - [ ] **Step 3: Ensure staff accounts are seeded**
 
 ```bash
-pnpm dlx prisma db seed
+pnpm exec prisma db seed
 ```
 
 Expected: completes (it's an upsert, safe to re-run).
@@ -3906,7 +4025,7 @@ test('client applies, supervisor rejects, client sees the reason', async ({ brow
 
 - [ ] **Step 5: Run the e2e suite**
 
-Ensure Docker Postgres is up and migrated (`docker compose up -d`, `pnpm dlx prisma migrate deploy`), then:
+Ensure the Neon Postgres project is reachable and migrated (`pnpm exec prisma migrate deploy`), then:
 
 Run: `pnpm test:e2e`
 Expected: both specs PASS.
