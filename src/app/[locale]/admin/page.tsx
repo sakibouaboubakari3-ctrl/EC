@@ -48,7 +48,7 @@ function CaseListView({
       <table className="mt-6 w-full text-left" data-testid="case-list-table">
         <thead>
           <tr>
-            <th>{t('auth.email')}</th>
+            <th>{t('admin.clientColumn')}</th>
             <th>{t('simulator.amountLabel')}</th>
             <th>{t('admin.statusFilter')}</th>
           </tr>

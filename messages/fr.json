@@ -61,6 +61,7 @@
     "amount": "Montant"
   },
   "admin": {
+    "clientColumn": "Client",
     "caseListTitle": "Dossiers",
     "searchPlaceholder": "Rechercher un client",
     "statusFilter": "Statut",
