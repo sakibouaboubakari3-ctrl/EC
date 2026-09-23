@@ -1,5 +1,5 @@
 import { redirect } from 'next/navigation';
-import { useTranslations } from 'next-intl';
+import { useFormatter, useTranslations } from 'next-intl';
 import { prisma } from '@/lib/prisma';
 import { clientAuth } from '@/lib/auth/client-auth';
 import { statusMessageKey } from '@/lib/status-label';
@@ -13,6 +13,7 @@ interface DashboardApplication {
 
 function DashboardView({ application }: { application: DashboardApplication | null }) {
   const t = useTranslations();
+  const format = useFormatter();
 
   if (!application) {
     return (
@@ -45,7 +46,7 @@ function DashboardView({ application }: { application: DashboardApplication | nu
           <tbody>
             {application.schedule.map((entry) => (
               <tr key={entry.id}>
-                <td>{entry.dueDate.toLocaleDateString()}</td>
+                <td>{format.dateTime(entry.dueDate, { dateStyle: 'medium' })}</td>
                 <td>{entry.amount.toFixed(2)}</td>
               </tr>
             ))}
