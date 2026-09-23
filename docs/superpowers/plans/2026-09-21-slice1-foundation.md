@@ -2359,7 +2359,7 @@ Expected: FAIL (module not found)
 Create `src/lib/applications/draft.ts`:
 
 ```ts
-import type { PrismaClient, LoanApplication } from '@prisma/client';
+import type { PrismaClient, LoanApplication, Prisma } from '@prisma/client';
 import { DEFAULT_LOAN_AMOUNT, DEFAULT_TERM_MONTHS, ANNUAL_INTEREST_RATE } from '@/lib/config/loan';
 
 export async function getOrCreateDraftApplication(
@@ -2397,10 +2397,12 @@ export async function saveApplicationStep(
   };
   return prisma.loanApplication.update({
     where: { id: applicationId },
-    data: { formData: mergedFormData },
+    data: { formData: mergedFormData as Prisma.InputJsonValue },
   });
 }
 ```
+
+(`as Prisma.InputJsonValue` is needed because Prisma Client 6.16.0 doesn't structurally accept a plain `Record<string, unknown>` spread for a `Json` field — no behavior change, just satisfies the type checker.)
 
 - [ ] **Step 4: Run test to verify it passes**
 
