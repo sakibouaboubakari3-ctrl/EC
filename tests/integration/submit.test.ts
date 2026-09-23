@@ -63,5 +63,8 @@ describe('submitApplication', () => {
 
     const unchanged = await prisma.loanApplication.findUniqueOrThrow({ where: { id: application.id } });
     expect(unchanged.status).toBe('DRAFT');
+
+    const auditEntries = await prisma.auditLog.findMany({ where: { entityId: application.id } });
+    expect(auditEntries).toHaveLength(0);
   });
 });
