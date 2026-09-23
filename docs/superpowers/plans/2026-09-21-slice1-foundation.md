@@ -16,7 +16,7 @@
 - FR is the default locale, EN is secondary; every screen built in this slice needs both, with formal "vous" register in French copy.
 - Design tokens only: navy `#06171E`, neon green `#80FF4E` accent, serif headings, sans body — no ad hoc colors/fonts.
 - Package manager is pnpm.
-- Local Postgres runs as a native Windows service (`postgresql-x64-18`), using a dedicated `espacecredit` role/database the user creates once — no external account required to develop. (Speced as Docker Compose originally; Docker was unavailable on the dev machine — see Task 2.)
+- The database is a free hosted Neon Postgres project, connected via `DATABASE_URL` in `.env` (not committed). (Speced as local Docker Compose originally; Docker was unavailable on the dev machine and a native-Postgres-service fallback hit unresolvable local permission issues — see Task 2.)
 - Client and staff are **separate identity models** with separate NextAuth instances/cookies (`client-session-token`, `staff-session-token`).
 - Mutations go through Server Actions; no separate REST/API layer in this slice.
 - Role scoping: `AGENT` is view/search-only; only `SUPERVISOR`/`ADMIN` can approve or reject.
@@ -99,7 +99,7 @@ git commit -m "chore: scaffold Next.js app with design tokens"
 
 ---
 
-### Task 2: Local Postgres setup + Prisma schema + migration + client singleton
+### Task 2: Neon Postgres setup + Prisma schema + migration + client singleton
 
 **Files:**
 - Create: `prisma/schema.prisma`
@@ -113,30 +113,26 @@ git commit -m "chore: scaffold Next.js app with design tokens"
 - Consumes: nothing new
 - Produces: `prisma` singleton client at `src/lib/prisma.ts` (default export named `prisma`, typed `PrismaClient`), and the full Prisma schema (`Client`, `StaffUser`, `LoanApplication`, `LoanScheduleEntry`, `Document`, `Payment`, `NotificationLog`, `AuditLog` models; `StaffRole`, `ApplicationStatus`, `ScheduleEntryStatus`, `ActorType` enums) that every later task's library functions import types from
 
-- [ ] **Step 1: Verify local Postgres is reachable**
+- [ ] **Step 1: Verify the Neon Postgres project is reachable**
 
-Local dev uses a **native PostgreSQL 18 Windows service** (`postgresql-x64-18`), not Docker — Docker is not installed on this machine. The user has already created a dedicated role and database for this project by running, as the postgres superuser:
+Local dev connects to a free hosted **Neon Postgres** project instead of a locally-run database — Docker was unavailable on the dev machine, and a native-Postgres-service fallback hit unresolvable local permission issues (no admin rights to reset the postgres superuser password or restart the service). The user already created the Neon project and a `.env` file with the real `DATABASE_URL` already exists at the repo root (gitignored, not committed) — do not overwrite it and do not ask for the credential again.
 
-```
-CREATE ROLE espacecredit WITH LOGIN PASSWORD 'espacecredit';
-CREATE DATABASE espacecredit OWNER espacecredit;
-```
-
-Confirm the service is running and the `espacecredit` role/database are reachable with the project's own (non-superuser) credentials — do not use or ask for the postgres superuser password:
+Confirm it's present and reachable:
 
 ```bash
-"/c/Program Files/PostgreSQL/18/bin/psql.exe" "postgresql://espacecredit:espacecredit@localhost:5432/espacecredit" -c "SELECT version();"
+grep -q '^DATABASE_URL=' .env && echo "DATABASE_URL is set" || echo "MISSING"
 ```
 
-Expected: prints the PostgreSQL version with no auth error. If this fails, STOP and report BLOCKED — do not attempt to create the role/database yourself or fall back to Docker/SQLite.
+Expected: `DATABASE_URL is set`. If `.env` is missing or `DATABASE_URL` is empty, STOP and report BLOCKED — do not fall back to Docker, a native Postgres service, or SQLite, and do not attempt to create a database yourself. (You'll get a live connectivity check for free in Step 5, when `prisma migrate dev` connects to it.)
 
-- [ ] **Step 2: Install Prisma and create `.env`**
+- [ ] **Step 2: Install Prisma**
 
 ```bash
 pnpm add -D prisma
 pnpm add @prisma/client
-cp .env.example .env
 ```
+
+`.env` already exists with a real `DATABASE_URL` (see Step 1) — do not run `cp .env.example .env`, which would overwrite it with the placeholder.
 
 - [ ] **Step 3: Write the Prisma schema**
 
@@ -408,13 +404,13 @@ describe('LoanApplication amount constraint', () => {
 - [ ] **Step 10: Run the test**
 
 Run: `pnpm test tests/integration/loan-amount-constraint.test.ts`
-Expected: both tests PASS (the DB must be reachable and migrated — re-run the Step 1 `psql` check and confirm the `postgresql-x64-18` Windows service is running if this fails).
+Expected: both tests PASS (the Neon project must be reachable and migrated — re-check `.env`'s `DATABASE_URL` and Neon project status if this fails).
 
 - [ ] **Step 11: Commit**
 
 ```bash
 git add -A
-git commit -m "feat: add Prisma schema, native Postgres setup, and amount range constraint"
+git commit -m "feat: add Prisma schema, Neon Postgres setup, and amount range constraint"
 ```
 
 ---
@@ -3897,7 +3893,7 @@ test('client applies, supervisor rejects, client sees the reason', async ({ brow
 
 - [ ] **Step 5: Run the e2e suite**
 
-Ensure the native Postgres service is running and migrated (`pnpm dlx prisma migrate deploy`), then:
+Ensure the Neon Postgres project is reachable and migrated (`pnpm dlx prisma migrate deploy`), then:
 
 Run: `pnpm test:e2e`
 Expected: both specs PASS.
