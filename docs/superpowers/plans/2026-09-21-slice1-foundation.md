@@ -3199,18 +3199,29 @@ import { statusMessageKey } from '@/lib/status-label';
 import type { ApplicationStatus } from '@prisma/client';
 import { Link } from '@/i18n/navigation';
 
-export default async function AdminCaseListPage({
-  searchParams,
+interface CaseListParams {
+  status?: string;
+  name?: string;
+  page?: string;
+}
+
+interface CaseListApplication {
+  id: string;
+  amount: number;
+  status: ApplicationStatus;
+  client: { firstName: string; lastName: string };
+}
+
+function CaseListView({
+  params,
+  applications,
+  total,
 }: {
-  searchParams: Promise<{ status?: string; name?: string; page?: string }>;
+  params: CaseListParams;
+  applications: CaseListApplication[];
+  total: number;
 }) {
   const t = useTranslations();
-  const params = await searchParams;
-  const { applications, total } = await listApplications(prisma, {
-    status: params.status ? (params.status as ApplicationStatus) : undefined,
-    clientName: params.name,
-    page: params.page ? Number(params.page) : 1,
-  });
 
   return (
     <main className="p-8">
@@ -3256,7 +3267,24 @@ export default async function AdminCaseListPage({
     </main>
   );
 }
+
+export default async function AdminCaseListPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ status?: string; name?: string; page?: string }>;
+}) {
+  const params = await searchParams;
+  const { applications, total } = await listApplications(prisma, {
+    status: params.status ? (params.status as ApplicationStatus) : undefined,
+    clientName: params.name,
+    page: params.page ? Number(params.page) : 1,
+  });
+
+  return <CaseListView params={params} applications={applications} total={total} />;
+}
 ```
+
+(`useTranslations()` is called inside the non-async `CaseListView`, not directly in the async `AdminCaseListPage`. Tasks 13 and 14 both hit real failures — a test-only "Invalid hook call" and an actual `pnpm build` failure ("Expected a suspended thenable") — from calling `useTranslations()` directly inside an async Server Component. Applying the same async-loader/sync-view split proactively here and in Task 16 to avoid the same failure.)
 
 - [ ] **Step 10: Verify the build**
 
@@ -3515,22 +3543,26 @@ import { notFound } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { prisma } from '@/lib/prisma';
 import { decideAction } from '../../actions';
+import type { ApplicationStatus } from '@prisma/client';
 
-export default async function ApplicationDetailPage({
-  params,
+interface DetailApplication {
+  id: string;
+  amount: number;
+  termMonths: number;
+  status: ApplicationStatus;
+  client: { email: string };
+}
+
+function ApplicationDetailView({
+  application,
+  approveAction,
+  rejectAction,
 }: {
-  params: Promise<{ id: string }>;
+  application: DetailApplication;
+  approveAction: (formData: FormData) => Promise<void>;
+  rejectAction: (formData: FormData) => Promise<void>;
 }) {
   const t = useTranslations();
-  const { id } = await params;
-  const application = await prisma.loanApplication.findUnique({
-    where: { id },
-    include: { client: true },
-  });
-  if (!application) notFound();
-
-  const approveAction = decideAction.bind(null, application.id, 'APPROVED');
-  const rejectAction = decideAction.bind(null, application.id, 'REJECTED');
   const isDecidable = application.status === 'SUBMITTED' || application.status === 'IN_REVIEW';
 
   return (
@@ -3573,7 +3605,33 @@ export default async function ApplicationDetailPage({
     </main>
   );
 }
+
+export default async function ApplicationDetailPage({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
+  const { id } = await params;
+  const application = await prisma.loanApplication.findUnique({
+    where: { id },
+    include: { client: true },
+  });
+  if (!application) notFound();
+
+  const approveAction = decideAction.bind(null, application.id, 'APPROVED');
+  const rejectAction = decideAction.bind(null, application.id, 'REJECTED');
+
+  return (
+    <ApplicationDetailView
+      application={application}
+      approveAction={approveAction}
+      rejectAction={rejectAction}
+    />
+  );
+}
 ```
+
+(`useTranslations()` is called inside the non-async `ApplicationDetailView`, not directly in the async `ApplicationDetailPage` — same async-loader/sync-view split applied to Task 15's admin case list, for the same reason: Tasks 13 and 14 both hit real failures calling `useTranslations()` directly inside an async Server Component.)
 
 - [ ] **Step 7: Verify the build**
 
