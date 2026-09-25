@@ -25,16 +25,16 @@ This spec covers document upload, storage, and staff/client visibility only. It 
 
 ## 4. Storage architecture
 
-**Provider:** Vercel Blob Storage, using its standard client-upload pattern for Next.js:
+**Provider:** Vercel Blob Storage (`@vercel/blob@2.8.0`, confirmed against the installed package's type definitions — not assumed), using **native private blobs** and its standard client-upload pattern for Next.js:
 
-1. The client-side upload widget calls `upload()` from `@vercel/blob/client`, pointing at a server route (`/api/documents/upload`).
+1. The client-side upload widget calls `upload()` from `@vercel/blob/client` with `access: 'private'` (hardcoded in our own client code, not client-editable) and `handleUploadUrl: '/api/documents/upload'`.
 2. That route implements `handleUpload`'s `onBeforeGenerateToken` callback: verifies the caller has a valid client session (`clientAuth()`), that the target `applicationId` belongs to that client, and that the requested `type` is one of `ID`/`INCOME_PROOF`/`BANK_STATEMENT`. It restricts `allowedContentTypes` to `application/pdf`, `image/jpeg`, `image/png`, sets a max size of 10MB, and encodes `{ applicationId, type }` into the token's `tokenPayload` so the completion callback knows what it's for.
 3. The actual file bytes go straight from the browser to Vercel Blob — they never pass through our server function, avoiding serverless body-size limits.
-4. `onUploadCompleted` fires server-side once the blob exists: it parses `tokenPayload`, and creates a `Document` row with `storageKey` set to the blob's `url` (Vercel Blob's own pathname/URL, which is unguessable but NOT treated as a security boundary by this app — see below), `originalFilename`, and `mimeType` from the completed blob's metadata.
+4. `onUploadCompleted` fires server-side once the blob exists: it parses `tokenPayload`, and creates a `Document` row with `storageKey` set to the blob's pathname, `originalFilename`, and `mimeType` from the completed blob's metadata.
 
-**Access control — the actual security boundary:** Vercel Blob URLs are fetchable by anyone who has the URL (no auth check at Vercel's edge). This app never sends a raw blob URL to a browser. All viewing/downloading goes through `GET /api/documents/[id]/download`: this route checks the caller's session (must be the document's owning client, authenticated via `clientAuth()`, or any authenticated staff member via `staffAuth()`), then fetches the file server-side from its stored blob URL and streams it back with the correct `Content-Type`/`Content-Disposition` headers. The blob URL itself never appears in any HTML, API response, or client-side JavaScript.
+**Access control — the actual security boundary:** a `private`-access blob cannot be fetched by URL alone — retrieving it requires calling `@vercel/blob`'s `get(pathname, { access: 'private' })` with the store's own `BLOB_READ_WRITE_TOKEN`, which only ever lives server-side. This is real access control from Vercel, not obscurity. `GET /api/documents/[id]/download` is still the only path a document ever flows through: it checks the caller's session (must be the document's owning client via `clientAuth()`, or any authenticated staff member via `staffAuth()`), then calls `get()` server-side and streams the result back with the correct `Content-Type`/`Content-Disposition` headers. Even if a `storageKey` leaked, it would be useless without the server's token.
 
-**New environment variable:** `BLOB_READ_WRITE_TOKEN`, from the user's Vercel project's Storage tab (create a Blob store, copy its token). Required for both local dev and any deployed environment — Vercel Blob has no local emulator, uploads go to the real cloud store even in development.
+**New environment variables:** `BLOB_READ_WRITE_TOKEN` and `BLOB_STORE_ID`, from the Vercel project's Storage tab (already created: a private Blob store named `espacecredit-documents`). Required for both local dev and any deployed environment — Vercel Blob has no local emulator, uploads go to the real cloud store even in development.
 
 ## 5. Data model
 
