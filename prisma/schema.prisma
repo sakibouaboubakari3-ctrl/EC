@@ -32,6 +32,12 @@ enum ActorType {
   STAFF
 }
 
+enum DocumentType {
+  ID
+  INCOME_PROOF
+  BANK_STATEMENT
+}
+
 model Client {
   id           String   @id @default(cuid())
   email        String   @unique
@@ -98,12 +104,16 @@ model LoanScheduleEntry {
 }
 
 model Document {
-  id            String          @id @default(cuid())
-  applicationId String
-  application   LoanApplication @relation(fields: [applicationId], references: [id])
-  type          String
-  storageKey    String
-  uploadedAt    DateTime        @default(now())
+  id               String          @id @default(cuid())
+  applicationId    String
+  application      LoanApplication @relation(fields: [applicationId], references: [id])
+  type             DocumentType
+  storageKey       String
+  originalFilename String
+  mimeType         String
+  uploadedAt       DateTime        @default(now())
+
+  @@index([applicationId])
 }
 
 model Payment {
