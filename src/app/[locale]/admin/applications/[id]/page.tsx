@@ -2,6 +2,7 @@ import { notFound } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { prisma } from '@/lib/prisma';
 import { decideAction } from '../../actions';
+import { listDocumentsForApplication } from '@/lib/documents/documents';
 import type { ApplicationStatus } from '@prisma/client';
 
 interface DetailApplication {
@@ -14,10 +15,12 @@ interface DetailApplication {
 
 function ApplicationDetailView({
   application,
+  documents,
   approveAction,
   rejectAction,
 }: {
   application: DetailApplication;
+  documents: { id: string; type: string; originalFilename: string; uploadedAt: Date }[];
   approveAction: (formData: FormData) => Promise<void>;
   rejectAction: (formData: FormData) => Promise<void>;
 }) {
@@ -37,6 +40,20 @@ function ApplicationDetailView({
         <dt>{t('simulator.termLabel')}</dt>
         <dd>{application.termMonths}</dd>
       </dl>
+      <section className="mt-4">
+        <h2 className="font-[family-name:var(--font-serif)] text-lg text-[var(--color-navy)]">
+          {t('documents.title')}
+        </h2>
+        <ul>
+          {documents.map((document) => (
+            <li key={document.id}>
+              <a href={`/api/documents/${document.id}/download`}>
+                {document.type} — {document.originalFilename}
+              </a>
+            </li>
+          ))}
+        </ul>
+      </section>
       {isDecidable && (
         <div className="mt-6 flex gap-4">
           <form action={approveAction}>
@@ -77,12 +94,15 @@ export default async function ApplicationDetailPage({
   });
   if (!application) notFound();
 
+  const documents = await listDocumentsForApplication(prisma, application.id);
+
   const approveAction = decideAction.bind(null, application.id, 'APPROVED');
   const rejectAction = decideAction.bind(null, application.id, 'REJECTED');
 
   return (
     <ApplicationDetailView
       application={application}
+      documents={documents}
       approveAction={approveAction}
       rejectAction={rejectAction}
     />
