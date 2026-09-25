@@ -25,8 +25,8 @@ describe('draft application', () => {
       data: { email, passwordHash: 'x', firstName: 'Ada', lastName: 'Lovelace' },
     });
     const application = await getOrCreateDraftApplication(prisma, client.id);
-    await saveApplicationStep(prisma, application.id, { amount: 8000, termMonths: 12 });
+    await saveApplicationStep(prisma, application.id, { amount: 80000, termMonths: 12 });
     const updated = await saveApplicationStep(prisma, application.id, { firstName: 'Ada' });
-    expect(updated.formData).toEqual({ amount: 8000, termMonths: 12, firstName: 'Ada' });
+    expect(updated.formData).toEqual({ amount: 80000, termMonths: 12, firstName: 'Ada' });
   });
 });

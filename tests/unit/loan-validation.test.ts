@@ -3,21 +3,21 @@ import { loanAmountSchema, applicationFormSchema } from '@/lib/validation/loan';
 
 describe('loanAmountSchema', () => {
   it('accepts amounts within bounds', () => {
-    expect(loanAmountSchema.safeParse(2000).success).toBe(true);
     expect(loanAmountSchema.safeParse(20000).success).toBe(true);
-    expect(loanAmountSchema.safeParse(5000).success).toBe(true);
+    expect(loanAmountSchema.safeParse(500000).success).toBe(true);
+    expect(loanAmountSchema.safeParse(100000).success).toBe(true);
   });
 
   it('rejects amounts outside bounds', () => {
-    expect(loanAmountSchema.safeParse(1999).success).toBe(false);
-    expect(loanAmountSchema.safeParse(20001).success).toBe(false);
+    expect(loanAmountSchema.safeParse(19999).success).toBe(false);
+    expect(loanAmountSchema.safeParse(500001).success).toBe(false);
   });
 });
 
 describe('applicationFormSchema', () => {
   const validForm = {
-    amount: 5000,
-    termMonths: 12,
+    amount: 100000,
+    termMonths: 36,
     firstName: 'Ada',
     lastName: 'Lovelace',
     dateOfBirth: '1990-01-01',

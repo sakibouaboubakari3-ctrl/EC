@@ -18,7 +18,7 @@ describe('submitApplication', () => {
   }
 
   const validStepData = {
-    amount: 8000,
+    amount: 80000,
     termMonths: 12,
     firstName: 'Ada',
     lastName: 'Lovelace',
@@ -43,7 +43,7 @@ describe('submitApplication', () => {
 
     const updated = await prisma.loanApplication.findUniqueOrThrow({ where: { id: application.id } });
     expect(updated.status).toBe('SUBMITTED');
-    expect(updated.amount).toBe(8000);
+    expect(updated.amount).toBe(80000);
     expect(updated.submittedAt).not.toBeNull();
 
     const auditEntries = await prisma.auditLog.findMany({ where: { entityId: application.id } });
@@ -56,7 +56,7 @@ describe('submitApplication', () => {
       data: { email, passwordHash: 'x', firstName: 'Ada', lastName: 'Lovelace' },
     });
     const application = await getOrCreateDraftApplication(prisma, client.id);
-    await saveApplicationStep(prisma, application.id, { amount: 8000 });
+    await saveApplicationStep(prisma, application.id, { amount: 80000 });
 
     const result = await submitApplication(prisma, application.id);
     expect(result.ok).toBe(false);

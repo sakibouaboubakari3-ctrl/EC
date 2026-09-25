@@ -14,7 +14,7 @@ async function applyAsNewClient(page: import('@playwright/test').Page, email: st
   await page.getByRole('button', { name: /se connecter/i }).click();
 
   await page.waitForURL(/\/apply\/loan-details/);
-  await page.locator('#amount-input').fill('8000');
+  await page.locator('#amount-input').fill('80000');
   await page.getByRole('button', { name: /suivant/i }).click();
 
   await page.waitForURL(/\/apply\/personal/);

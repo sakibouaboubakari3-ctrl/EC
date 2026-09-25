@@ -32,9 +32,9 @@ describe('decideApplication', () => {
     return prisma.loanApplication.create({
       data: {
         clientId: client.id,
-        amount: 6000,
+        amount: 60000,
         termMonths: 12,
-        rate: 0.15,
+        rate: 0.04,
         status: 'SUBMITTED',
         submittedAt: new Date(),
       },

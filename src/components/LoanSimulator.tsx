@@ -1,7 +1,13 @@
 'use client';
 
 import { useState } from 'react';
-import { MIN_LOAN_AMOUNT, MAX_LOAN_AMOUNT, LOAN_TERMS_MONTHS } from '@/lib/config/loan';
+import {
+  MIN_LOAN_AMOUNT,
+  MAX_LOAN_AMOUNT,
+  LOAN_TERMS_MONTHS,
+  DEFAULT_LOAN_AMOUNT,
+  DEFAULT_TERM_MONTHS,
+} from '@/lib/config/loan';
 import { generateAmortizationSchedule } from '@/lib/amortization';
 
 export interface LoanSimulatorProps {
@@ -11,9 +17,15 @@ export interface LoanSimulatorProps {
   onChange?: (value: { amount: number; termMonths: number }) => void;
 }
 
+const currencyFormatter = new Intl.NumberFormat('fr-CA', {
+  style: 'currency',
+  currency: 'CAD',
+  maximumFractionDigits: 0,
+});
+
 export function LoanSimulator({
-  initialAmount = 5000,
-  initialTermMonths = 12,
+  initialAmount = DEFAULT_LOAN_AMOUNT,
+  initialTermMonths = DEFAULT_TERM_MONTHS,
   annualRate,
   onChange,
 }: LoanSimulatorProps) {
@@ -42,7 +54,7 @@ export function LoanSimulator({
   return (
     <div className="rounded-2xl bg-white p-6 shadow-sm" data-testid="loan-simulator">
       <label htmlFor="amount-slider" className="font-[family-name:var(--font-serif)] text-lg text-[var(--color-navy)]">
-        {`${MIN_LOAN_AMOUNT}-${MAX_LOAN_AMOUNT}`}
+        {`${currencyFormatter.format(MIN_LOAN_AMOUNT)} - ${currencyFormatter.format(MAX_LOAN_AMOUNT)}`}
       </label>
       <input
         id="amount-slider"
@@ -51,7 +63,7 @@ export function LoanSimulator({
         type="range"
         min={MIN_LOAN_AMOUNT}
         max={MAX_LOAN_AMOUNT}
-        step={100}
+        step={5000}
         value={amount}
         onChange={(e) => updateAmount(Number(e.target.value))}
         className="w-full"
@@ -81,7 +93,7 @@ export function LoanSimulator({
         ))}
       </select>
       <p data-testid="monthly-payment" className="mt-4 text-xl font-bold text-[var(--color-navy)]">
-        {monthlyPayment.toFixed(2)}
+        {currencyFormatter.format(monthlyPayment)}
       </p>
     </div>
   );

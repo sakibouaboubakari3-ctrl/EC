@@ -15,10 +15,10 @@ describe('listApplications', () => {
       data: { email, passwordHash: 'x', firstName: 'Grace', lastName: 'Hopper' },
     });
     await prisma.loanApplication.create({
-      data: { clientId: client.id, amount: 3000, termMonths: 12, rate: 0.15, status: 'SUBMITTED' },
+      data: { clientId: client.id, amount: 30000, termMonths: 12, rate: 0.04, status: 'SUBMITTED' },
     });
     await prisma.loanApplication.create({
-      data: { clientId: client.id, amount: 9000, termMonths: 24, rate: 0.15, status: 'APPROVED' },
+      data: { clientId: client.id, amount: 90000, termMonths: 24, rate: 0.04, status: 'APPROVED' },
     });
 
     const submittedOnly = await listApplications(prisma, { status: 'SUBMITTED' });
