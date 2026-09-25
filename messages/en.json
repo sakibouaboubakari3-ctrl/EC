@@ -77,6 +77,8 @@
     "bankStatementLabel": "Bank statements (at least 6 months)",
     "upload": "Upload",
     "delete": "Delete",
-    "noFile": "No file"
+    "noFile": "No file",
+    "uploadError": "Upload failed. Check the file type and size, then try again.",
+    "deleteError": "Delete failed. Please try again."
   }
 }

@@ -8,6 +8,11 @@ vi.mock('@/lib/auth/client-auth', () => ({
   clientAuth: vi.fn().mockResolvedValue({ user: { id: 'client-1' } }),
 }));
 
+vi.mock('next/navigation', () => ({
+  redirect: vi.fn(),
+  useRouter: () => ({ refresh: vi.fn() }),
+}));
+
 const findFirstMock = vi.fn();
 const documentFindManyMock = vi.fn().mockResolvedValue([]);
 vi.mock('@/lib/prisma', () => ({

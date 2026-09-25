@@ -77,6 +77,8 @@
     "bankStatementLabel": "Relevés bancaires (au moins 6 mois)",
     "upload": "Téléverser",
     "delete": "Supprimer",
-    "noFile": "Aucun fichier"
+    "noFile": "Aucun fichier",
+    "uploadError": "Le téléversement a échoué. Vérifiez le type et la taille du fichier, puis réessayez.",
+    "deleteError": "La suppression a échoué. Veuillez réessayer."
   }
 }

@@ -4,11 +4,10 @@ import { prisma } from '@/lib/prisma';
 import { clientAuth } from '@/lib/auth/client-auth';
 import {
   authorizeDocumentUpload,
-  isValidDocumentType,
-  replaceSingleTypeDocument,
-  createDocument,
+  expectedStorageKeyPrefix,
   InvalidDocumentTypeError,
   ForbiddenError,
+  ApplicationNotMutableError,
 } from '@/lib/documents/documents';
 import { ALLOWED_DOCUMENT_MIME_TYPES, MAX_DOCUMENT_SIZE_BYTES } from '@/lib/documents/upload-validation';
 
@@ -37,40 +36,25 @@ export async function POST(request: Request): Promise<NextResponse> {
         try {
           await authorizeDocumentUpload(prisma, { clientId: session.user.id, applicationId, type });
         } catch (error) {
-          if (error instanceof InvalidDocumentTypeError || error instanceof ForbiddenError) {
+          if (
+            error instanceof InvalidDocumentTypeError ||
+            error instanceof ForbiddenError ||
+            error instanceof ApplicationNotMutableError
+          ) {
             throw new Error(error.message);
           }
           throw error;
         }
 
+        if (!pathname.startsWith(expectedStorageKeyPrefix(applicationId, type))) {
+          throw new Error('Upload path does not match the authorized application/type');
+        }
+
         return {
           allowedContentTypes: [...ALLOWED_DOCUMENT_MIME_TYPES],
           maximumSizeInBytes: MAX_DOCUMENT_SIZE_BYTES,
-          tokenPayload: JSON.stringify({ applicationId, type, originalFilename: pathname }),
+          addRandomSuffix: true,
         };
-      },
-      onUploadCompleted: async ({ blob, tokenPayload }) => {
-        if (!tokenPayload) return;
-        const { applicationId, type, originalFilename } = JSON.parse(tokenPayload) as {
-          applicationId: string;
-          type: string;
-          originalFilename: string;
-        };
-        if (!isValidDocumentType(type)) return;
-
-        const input = {
-          applicationId,
-          type,
-          storageKey: blob.pathname,
-          originalFilename,
-          mimeType: blob.contentType,
-        };
-
-        if (type === 'ID' || type === 'INCOME_PROOF') {
-          await replaceSingleTypeDocument(prisma, input);
-        } else {
-          await createDocument(prisma, input);
-        }
       },
     });
 

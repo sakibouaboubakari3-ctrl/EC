@@ -9,15 +9,16 @@ vi.mock('@vercel/blob/client', () => ({
   upload: vi.fn(),
 }));
 
+const refreshMock = vi.fn();
+vi.mock('next/navigation', () => ({
+  useRouter: () => ({ refresh: refreshMock }),
+}));
+
 describe('DocumentUpload', () => {
   it('renders an upload control for each required document type', () => {
     render(
       <NextIntlClientProvider locale="fr" messages={messages}>
-        <DocumentUpload
-          applicationId="app-1"
-          documents={[]}
-          onDeleted={() => {}}
-        />
+        <DocumentUpload applicationId="app-1" documents={[]} />
       </NextIntlClientProvider>
     );
     expect(screen.getByLabelText(/id-upload/i)).toBeInTheDocument();
@@ -38,7 +39,6 @@ describe('DocumentUpload', () => {
               uploadedAt: new Date('2026-01-15'),
             },
           ]}
-          onDeleted={() => {}}
         />
       </NextIntlClientProvider>
     );

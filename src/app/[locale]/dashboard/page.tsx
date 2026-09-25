@@ -62,7 +62,7 @@ function DashboardView({
           </tbody>
         </table>
       )}
-      <DocumentUpload applicationId={application.id} documents={documents} onDeleted={() => {}} />
+      <DocumentUpload applicationId={application.id} documents={documents} />
     </main>
   );
 }

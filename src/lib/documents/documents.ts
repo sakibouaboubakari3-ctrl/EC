@@ -1,5 +1,11 @@
 import { DocumentType } from '@prisma/client';
-import type { PrismaClient, Document } from '@prisma/client';
+import type { PrismaClient, Document, ApplicationStatus } from '@prisma/client';
+
+export const MUTABLE_APPLICATION_STATUSES: ApplicationStatus[] = ['SUBMITTED', 'IN_REVIEW'];
+
+export function isApplicationMutable(status: ApplicationStatus): boolean {
+  return MUTABLE_APPLICATION_STATUSES.includes(status);
+}
 
 const DOCUMENT_TYPE_VALUES = Object.values(DocumentType) as string[];
 
@@ -60,6 +66,7 @@ export async function replaceSingleTypeDocument(
 
 export class InvalidDocumentTypeError extends Error {}
 export class ForbiddenError extends Error {}
+export class ApplicationNotMutableError extends Error {}
 
 export interface AuthorizeDocumentUploadInput {
   clientId: string;
@@ -80,4 +87,81 @@ export async function authorizeDocumentUpload(
   if (application.clientId !== input.clientId) {
     throw new ForbiddenError("Cannot upload a document to another client's application");
   }
+  if (!isApplicationMutable(application.status)) {
+    throw new ApplicationNotMutableError('Cannot modify documents after a decision has been made');
+  }
+}
+
+export interface ConfirmDocumentUploadInput extends AuthorizeDocumentUploadInput {
+  storageKey: string;
+  originalFilename: string;
+  mimeType: string;
+}
+
+export interface ConfirmDocumentUploadResult {
+  created: Document;
+  deletedStorageKeys: string[];
+}
+
+export function expectedStorageKeyPrefix(applicationId: string, type: string): string {
+  return `applications/${applicationId}/${type}/`;
+}
+
+export async function confirmDocumentUpload(
+  prisma: PrismaClient,
+  input: ConfirmDocumentUploadInput
+): Promise<ConfirmDocumentUploadResult> {
+  await authorizeDocumentUpload(prisma, {
+    clientId: input.clientId,
+    applicationId: input.applicationId,
+    type: input.type,
+  });
+
+  if (!isValidDocumentType(input.type)) {
+    throw new InvalidDocumentTypeError(`Invalid document type: ${input.type}`);
+  }
+  if (!input.storageKey.startsWith(expectedStorageKeyPrefix(input.applicationId, input.type))) {
+    throw new ForbiddenError('Storage key does not match the authorized application/type');
+  }
+
+  const documentInput: CreateDocumentInput = {
+    applicationId: input.applicationId,
+    type: input.type,
+    storageKey: input.storageKey,
+    originalFilename: input.originalFilename,
+    mimeType: input.mimeType,
+  };
+
+  if (SINGLE_FILE_TYPES.includes(input.type)) {
+    const { created, deleted } = await replaceSingleTypeDocument(prisma, documentInput);
+    return { created, deletedStorageKeys: deleted.map((d) => d.storageKey) };
+  }
+
+  const created = await createDocument(prisma, documentInput);
+  return { created, deletedStorageKeys: [] };
+}
+
+export interface AuthorizeDocumentDeletionInput {
+  clientId: string;
+  documentId: string;
+}
+
+export async function authorizeDocumentDeletion(
+  prisma: PrismaClient,
+  input: AuthorizeDocumentDeletionInput
+): Promise<Document | null> {
+  const document = await getDocumentById(prisma, input.documentId);
+  if (!document) return null;
+
+  const application = await prisma.loanApplication.findUniqueOrThrow({
+    where: { id: document.applicationId },
+  });
+  if (application.clientId !== input.clientId) {
+    throw new ForbiddenError("Cannot delete another client's document");
+  }
+  if (!isApplicationMutable(application.status)) {
+    throw new ApplicationNotMutableError('Cannot modify documents after a decision has been made');
+  }
+
+  return document;
 }

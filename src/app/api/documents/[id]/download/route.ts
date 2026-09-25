@@ -4,6 +4,7 @@ import { prisma } from '@/lib/prisma';
 import { clientAuth } from '@/lib/auth/client-auth';
 import { staffAuth } from '@/lib/auth/staff-auth';
 import { getDocumentById } from '@/lib/documents/documents';
+import { buildContentDispositionHeader } from '@/lib/documents/content-disposition';
 
 export async function GET(
   _request: Request,
@@ -34,7 +35,7 @@ export async function GET(
   return new NextResponse(result.stream, {
     headers: {
       'Content-Type': document.mimeType,
-      'Content-Disposition': `attachment; filename="${document.originalFilename}"`,
+      'Content-Disposition': buildContentDispositionHeader(document.originalFilename),
     },
   });
 }
