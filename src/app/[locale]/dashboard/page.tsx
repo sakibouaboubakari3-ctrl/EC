@@ -3,15 +3,24 @@ import { useFormatter, useTranslations } from 'next-intl';
 import { prisma } from '@/lib/prisma';
 import { clientAuth } from '@/lib/auth/client-auth';
 import { statusMessageKey } from '@/lib/status-label';
+import { listDocumentsForApplication } from '@/lib/documents/documents';
+import { DocumentUpload, type DocumentSummary } from '@/components/DocumentUpload';
 import type { ApplicationStatus } from '@prisma/client';
 
 interface DashboardApplication {
+  id: string;
   status: ApplicationStatus;
   decisionReason: string | null;
   schedule: Array<{ id: string; dueDate: Date; amount: number }>;
 }
 
-function DashboardView({ application }: { application: DashboardApplication | null }) {
+function DashboardView({
+  application,
+  documents,
+}: {
+  application: DashboardApplication | null;
+  documents: DocumentSummary[];
+}) {
   const t = useTranslations();
   const format = useFormatter();
 
@@ -53,6 +62,7 @@ function DashboardView({ application }: { application: DashboardApplication | nu
           </tbody>
         </table>
       )}
+      <DocumentUpload applicationId={application.id} documents={documents} onDeleted={() => {}} />
     </main>
   );
 }
@@ -67,5 +77,9 @@ export default async function DashboardPage() {
     include: { schedule: { orderBy: { dueDate: 'asc' } } },
   });
 
-  return <DashboardView application={application} />;
+  const documents = application
+    ? await listDocumentsForApplication(prisma, application.id)
+    : [];
+
+  return <DashboardView application={application} documents={documents} />;
 }

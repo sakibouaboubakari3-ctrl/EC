@@ -69,5 +69,14 @@
     "approve": "Approve",
     "reject": "Reject",
     "reasonLabel": "Reason"
+  },
+  "documents": {
+    "title": "Documents",
+    "idLabel": "Government ID",
+    "incomeLabel": "Proof of income",
+    "bankStatementLabel": "Bank statements (at least 6 months)",
+    "upload": "Upload",
+    "delete": "Delete",
+    "noFile": "No file"
   }
 }

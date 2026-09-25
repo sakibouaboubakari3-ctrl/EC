@@ -69,5 +69,14 @@
     "approve": "Approuver",
     "reject": "Refuser",
     "reasonLabel": "Motif"
+  },
+  "documents": {
+    "title": "Documents",
+    "idLabel": "Pièce d'identité",
+    "incomeLabel": "Preuve de revenu",
+    "bankStatementLabel": "Relevés bancaires (au moins 6 mois)",
+    "upload": "Téléverser",
+    "delete": "Supprimer",
+    "noFile": "Aucun fichier"
   }
 }

@@ -9,8 +9,12 @@ vi.mock('@/lib/auth/client-auth', () => ({
 }));
 
 const findFirstMock = vi.fn();
+const documentFindManyMock = vi.fn().mockResolvedValue([]);
 vi.mock('@/lib/prisma', () => ({
-  prisma: { loanApplication: { findFirst: (...args: unknown[]) => findFirstMock(...args) } },
+  prisma: {
+    loanApplication: { findFirst: (...args: unknown[]) => findFirstMock(...args) },
+    document: { findMany: (...args: unknown[]) => documentFindManyMock(...args) },
+  },
 }));
 
 import DashboardPage from '@/app/[locale]/dashboard/page';
