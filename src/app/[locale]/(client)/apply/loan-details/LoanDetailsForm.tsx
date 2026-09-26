@@ -7,6 +7,7 @@ import { LoanSimulator } from '@/components/LoanSimulator';
 import { StepProgress } from '@/components/StepProgress';
 import { ANNUAL_INTEREST_RATE, DEFAULT_LOAN_AMOUNT, DEFAULT_TERM_MONTHS } from '@/lib/config/loan';
 import { saveStepAction } from '../actions';
+import { pageShellClass, wideCardClass, primaryButtonClass } from '@/lib/ui/classnames';
 
 export function LoanDetailsForm({ applicationId }: { applicationId: string }) {
   const t = useTranslations();
@@ -22,30 +23,32 @@ export function LoanDetailsForm({ applicationId }: { applicationId: string }) {
   }
 
   return (
-    <main className="mx-auto max-w-xl p-8">
-      <StepProgress
-        steps={[
-          t('apply.stepLoanDetails'),
-          t('apply.stepPersonalInfo'),
-          t('apply.stepEmployment'),
-          t('apply.stepReview'),
-        ]}
-        currentStep={0}
-      />
-      <LoanSimulator
-        initialAmount={value.amount}
-        initialTermMonths={value.termMonths}
-        annualRate={ANNUAL_INTEREST_RATE}
-        onChange={setValue}
-      />
-      <button
-        type="button"
-        onClick={handleNext}
-        disabled={isPending}
-        className="mt-6 rounded-full bg-[var(--color-accent)] px-6 py-2 font-bold text-[var(--color-navy)]"
-      >
-        {t('common.next')}
-      </button>
+    <main className={pageShellClass}>
+      <div className={wideCardClass}>
+        <StepProgress
+          steps={[
+            t('apply.stepLoanDetails'),
+            t('apply.stepPersonalInfo'),
+            t('apply.stepEmployment'),
+            t('apply.stepReview'),
+          ]}
+          currentStep={0}
+        />
+        <LoanSimulator
+          initialAmount={value.amount}
+          initialTermMonths={value.termMonths}
+          annualRate={ANNUAL_INTEREST_RATE}
+          onChange={setValue}
+        />
+        <button
+          type="button"
+          onClick={handleNext}
+          disabled={isPending}
+          className={`mt-6 ${primaryButtonClass}`}
+        >
+          {t('common.next')}
+        </button>
+      </div>
     </main>
   );
 }
