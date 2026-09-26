@@ -6,9 +6,13 @@ import { statusMessageKey } from '@/lib/status-label';
 import { listDocumentsForApplication } from '@/lib/documents/documents';
 import { DocumentUpload, type DocumentSummary } from '@/components/DocumentUpload';
 import { ContractSignForm } from '@/components/ContractSignForm';
+import { StatusBadge } from '@/components/StatusBadge';
 import { renderLoanContractHtml, COMPANY_LEGAL_NAME } from '@/lib/contracts/contract-template';
 import { calculateNetDisbursement, ORIGINATION_FEE_RATE } from '@/lib/config/loan';
+import { pageShellClass } from '@/lib/ui/classnames';
 import type { ApplicationStatus } from '@prisma/client';
+
+const cardClass = 'rounded-2xl bg-white p-6 shadow-sm';
 
 const COMPANY_REP_NAME = 'Kenth Tremblay';
 const COMPANY_REP_TITLE_FR = 'Président-directeur général';
@@ -57,17 +61,17 @@ function ContractCard({ application, locale }: { application: DashboardApplicati
   });
 
   return (
-    <section className="mt-6" data-testid="contract-section">
-      <h2 className="font-[family-name:var(--font-serif)] text-lg text-[var(--color-navy)]">
+    <section className={cardClass} data-testid="contract-section">
+      <h2 className="text-lg font-bold text-[var(--color-navy)]">
         {t('title')} — {COMPANY_LEGAL_NAME}
       </h2>
       <iframe
         title={t('title')}
         srcDoc={html}
-        className="mt-2 h-[500px] w-full rounded-lg border border-[var(--color-navy)]/10"
+        className="mt-3 h-[500px] w-full rounded-lg border border-[var(--color-navy)]/10"
       />
       {application.contractSignedAt ? (
-        <div className="mt-2 text-sm">
+        <div className="mt-3 rounded-lg bg-[var(--color-accent)]/10 p-4 text-sm text-[var(--color-navy)]">
           <p>
             {t('signedOn')} {format.dateTime(application.contractSignedAt, { dateStyle: 'long' })}
           </p>
@@ -98,44 +102,59 @@ function DashboardView({
 
   if (!application) {
     return (
-      <main className="p-8">
-        <h1 className="font-[family-name:var(--font-serif)] text-2xl text-[var(--color-navy)]">
-          {t('dashboard.title')}
-        </h1>
-        <p data-testid="application-status">{t('dashboard.statusDraft')}</p>
+      <main className={pageShellClass}>
+        <div className={`mx-auto max-w-3xl ${cardClass}`}>
+          <h1 className="text-2xl font-bold text-[var(--color-navy)]">{t('dashboard.title')}</h1>
+          <p data-testid="application-status" className="mt-2 text-[var(--color-navy)]/70">
+            {t('dashboard.statusDraft')}
+          </p>
+        </div>
       </main>
     );
   }
 
   return (
-    <main className="p-8" data-testid="dashboard">
-      <h1 className="font-[family-name:var(--font-serif)] text-2xl text-[var(--color-navy)]">
-        {t('dashboard.title')}
-      </h1>
-      <p data-testid="application-status">{t(statusMessageKey(application.status))}</p>
-      {application.status === 'REJECTED' && application.decisionReason && (
-        <p data-testid="decision-reason">{application.decisionReason}</p>
-      )}
-      {application.status === 'APPROVED' && (
-        <table className="mt-6 w-full text-left" data-testid="schedule-table">
-          <thead>
-            <tr>
-              <th>{t('dashboard.dueDate')}</th>
-              <th>{t('dashboard.amount')}</th>
-            </tr>
-          </thead>
-          <tbody>
-            {application.schedule.map((entry) => (
-              <tr key={entry.id}>
-                <td>{format.dateTime(entry.dueDate, { dateStyle: 'medium' })}</td>
-                <td>{entry.amount.toFixed(2)}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      )}
-      {application.status === 'APPROVED' && <ContractCard application={application} locale={locale} />}
-      <DocumentUpload applicationId={application.id} documents={documents} />
+    <main className={pageShellClass} data-testid="dashboard">
+      <div className="mx-auto max-w-3xl space-y-6">
+        <div className={cardClass}>
+          <div className="flex items-center justify-between">
+            <h1 className="text-2xl font-bold text-[var(--color-navy)]">{t('dashboard.title')}</h1>
+            <StatusBadge status={application.status} />
+          </div>
+          <p data-testid="application-status" className="sr-only">
+            {t(statusMessageKey(application.status))}
+          </p>
+          {application.status === 'REJECTED' && application.decisionReason && (
+            <p data-testid="decision-reason" className="mt-3 text-[var(--color-navy)]/80">
+              {application.decisionReason}
+            </p>
+          )}
+        </div>
+        {application.status === 'APPROVED' && (
+          <div className={cardClass}>
+            <table className="w-full text-left" data-testid="schedule-table">
+              <thead>
+                <tr className="border-b border-[var(--color-navy)]/10 text-sm text-[var(--color-navy)]/60">
+                  <th className="pb-2 font-medium">{t('dashboard.dueDate')}</th>
+                  <th className="pb-2 text-right font-medium">{t('dashboard.amount')}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {application.schedule.map((entry) => (
+                  <tr key={entry.id} className="border-b border-[var(--color-navy)]/5 last:border-0">
+                    <td className="py-2">{format.dateTime(entry.dueDate, { dateStyle: 'medium' })}</td>
+                    <td className="py-2 text-right">
+                      {format.number(entry.amount, { style: 'currency', currency: 'CAD' })}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+        {application.status === 'APPROVED' && <ContractCard application={application} locale={locale} />}
+        <DocumentUpload applicationId={application.id} documents={documents} />
+      </div>
     </main>
   );
 }
