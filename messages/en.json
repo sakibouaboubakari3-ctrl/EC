@@ -1,6 +1,45 @@
 {
   "home": {
-    "title": "Welcome to EspaceCredit"
+    "title": "Welcome to EspaceCredit",
+    "hero": {
+      "eyebrow": "Loans from $20,000 to $500,000",
+      "headline": "Your next step deserves financing that moves as fast as you do.",
+      "subheadline": "A decision within 24 hours, a fully online process, no endless paperwork.",
+      "ctaPrimary": "Apply now",
+      "ctaSecondary": "Simulate my loan",
+      "imageAlt": "Two smiling business owners in front of their shop, holding a 'Yes we're open' sign"
+    },
+    "problem": {
+      "title": "Traditional banks don't move at your pace.",
+      "item1Title": "Weeks of waiting",
+      "item1Body": "While you wait for an answer, your projects don't wait.",
+      "item2Title": "Endless paperwork",
+      "item2Body": "Complex forms and rigid criteria that don't reflect your reality.",
+      "item3Title": "Missed opportunities",
+      "item3Body": "Every day of delay is a growth opportunity slipping by."
+    },
+    "guide": {
+      "title": "We get it. That's why we built EspaceCredit.",
+      "body": "EspaceCredit is a Quebec-based company that designed a financing process for people in a hurry to move forward — not to be kept waiting. Clear amount, term, and payment from the start, a decision within 24 hours, and a team that supports you every step of the way."
+    },
+    "plan": {
+      "title": "Three steps, no surprises.",
+      "step1Title": "Simulate and apply",
+      "step1Body": "Adjust the amount and term below, then submit your application online in minutes.",
+      "step2Title": "Get a decision within 24 hours",
+      "step2Body": "Our team reviews your file and gives you a clear answer, with visible status at every stage.",
+      "step3Title": "Sign and receive your funds",
+      "step3Body": "Sign your contract online and your deposit is scheduled automatically.",
+      "imageAlt": "Two colleagues collaborating on a laptop in a bright office"
+    },
+    "success": {
+      "title": "Your projects move forward. Your business grows.",
+      "body": "No more waiting and uncertainty: you're back in control of your timeline and your decisions."
+    },
+    "finalCta": {
+      "title": "Ready to move forward?",
+      "cta": "Apply now"
+    }
   },
   "nav": {
     "login": "Log in",

@@ -1,6 +1,45 @@
 {
   "home": {
-    "title": "Bienvenue chez EspaceCredit"
+    "title": "Bienvenue chez EspaceCredit",
+    "hero": {
+      "eyebrow": "Prêts de 20 000 $ à 500 000 $",
+      "headline": "Votre prochaine étape mérite un financement qui avance aussi vite que vous.",
+      "subheadline": "Une réponse en 24 heures, un processus entièrement en ligne, sans paperasse interminable.",
+      "ctaPrimary": "Faire une demande",
+      "ctaSecondary": "Simuler mon prêt",
+      "imageAlt": "Deux entrepreneurs souriants devant leur commerce, tenant une pancarte « Yes we're open »"
+    },
+    "problem": {
+      "title": "Les banques traditionnelles n'avancent pas à votre rythme.",
+      "item1Title": "Des semaines d'attente",
+      "item1Body": "Pendant que vous attendez une réponse, vos projets n'attendent pas.",
+      "item2Title": "Une paperasse interminable",
+      "item2Body": "Formulaires complexes et critères rigides qui ne tiennent pas compte de votre réalité.",
+      "item3Title": "Des occasions manquées",
+      "item3Body": "Chaque jour de retard est une occasion de croissance qui passe."
+    },
+    "guide": {
+      "title": "On comprend. Et on a bâti EspaceCredit pour ça.",
+      "body": "EspaceCredit est une entreprise québécoise qui a conçu un processus de financement pensé pour les gens pressés d'avancer — pas pour les faire attendre. Montant, durée et mensualité clairs dès le départ, décision en 24 heures, et une équipe qui vous accompagne à chaque étape."
+    },
+    "plan": {
+      "title": "Trois étapes, aucune surprise.",
+      "step1Title": "Simulez et faites une demande",
+      "step1Body": "Ajustez le montant et la durée ci-dessous, puis soumettez votre demande en ligne en quelques minutes.",
+      "step2Title": "Recevez une réponse en 24 heures",
+      "step2Body": "Notre équipe analyse votre dossier et vous répond clairement, avec un statut visible à tout moment.",
+      "step3Title": "Signez et recevez vos fonds",
+      "step3Body": "Signez votre contrat en ligne et votre dépôt est planifié automatiquement.",
+      "imageAlt": "Deux collègues qui collaborent sur un ordinateur portable dans un bureau lumineux"
+    },
+    "success": {
+      "title": "Vos projets avancent. Votre entreprise grandit.",
+      "body": "Fini l'attente et l'incertitude : vous reprenez le contrôle de votre échéancier et de vos décisions."
+    },
+    "finalCta": {
+      "title": "Prêt à avancer ?",
+      "cta": "Faire une demande maintenant"
+    }
   },
   "nav": {
     "login": "Connexion",
