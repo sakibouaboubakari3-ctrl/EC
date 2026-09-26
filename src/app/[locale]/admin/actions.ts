@@ -5,8 +5,29 @@ import { revalidatePath } from 'next/cache';
 import { prisma } from '@/lib/prisma';
 import { staffAuth } from '@/lib/auth/staff-auth';
 import { decideApplication, ForbiddenError, AlreadyDecidedError } from '@/lib/applications/decide';
+import { startReview, NotSubmittedError } from '@/lib/applications/start-review';
 import { getEmailClient, getAppUrl } from '@/lib/email/client';
 import { notifyApplicationDecision } from '@/lib/email/notifications';
+
+export async function startReviewAction(applicationId: string): Promise<void> {
+  const session = await staffAuth();
+  if (!session?.user?.id) {
+    redirect('/admin/login');
+  }
+
+  try {
+    await startReview(prisma, { applicationId, staffId: session.user.id });
+  } catch (error) {
+    if (error instanceof NotSubmittedError) {
+      redirect(`/admin/applications/${applicationId}`);
+    }
+    throw error;
+  }
+
+  revalidatePath('/[locale]/admin/applications/[id]', 'page');
+  revalidatePath('/[locale]/admin', 'page');
+  redirect(`/admin/applications/${applicationId}`);
+}
 
 export async function decideAction(
   applicationId: string,

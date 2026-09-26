@@ -80,7 +80,9 @@
     "detailTitle": "Application detail",
     "approve": "Approve",
     "reject": "Reject",
-    "reasonLabel": "Reason"
+    "reasonLabel": "Reason",
+    "viewCase": "View case",
+    "startReview": "Start review"
   },
   "documents": {
     "title": "Documents",

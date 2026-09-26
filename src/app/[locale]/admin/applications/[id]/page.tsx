@@ -1,8 +1,9 @@
 import { notFound } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { prisma } from '@/lib/prisma';
-import { decideAction } from '../../actions';
+import { decideAction, startReviewAction } from '../../actions';
 import { listDocumentsForApplication } from '@/lib/documents/documents';
+import { StatusBadge } from '@/components/StatusBadge';
 import type { ApplicationStatus } from '@prisma/client';
 
 interface DetailApplication {
@@ -18,20 +19,35 @@ function ApplicationDetailView({
   documents,
   approveAction,
   rejectAction,
+  startReviewAction,
 }: {
   application: DetailApplication;
   documents: { id: string; type: string; originalFilename: string; uploadedAt: Date }[];
   approveAction: (formData: FormData) => Promise<void>;
   rejectAction: (formData: FormData) => Promise<void>;
+  startReviewAction: () => Promise<void>;
 }) {
   const t = useTranslations();
   const isDecidable = application.status === 'SUBMITTED' || application.status === 'IN_REVIEW';
 
   return (
     <main className="p-8" data-testid="application-detail">
-      <h1 className="font-[family-name:var(--font-serif)] text-2xl text-[var(--color-navy)]">
-        {t('admin.detailTitle')}
-      </h1>
+      <div className="flex items-center justify-between">
+        <h1 className="font-[family-name:var(--font-serif)] text-2xl text-[var(--color-navy)]">
+          {t('admin.detailTitle')}
+        </h1>
+        <StatusBadge status={application.status} />
+      </div>
+      {application.status === 'SUBMITTED' && (
+        <form action={startReviewAction} className="mt-4">
+          <button
+            type="submit"
+            className="rounded-full border border-[var(--color-navy)] px-6 py-2 font-bold text-[var(--color-navy)]"
+          >
+            {t('admin.startReview')}
+          </button>
+        </form>
+      )}
       <dl className="mt-4 grid grid-cols-2 gap-2">
         <dt>{t('auth.email')}</dt>
         <dd>{application.client.email}</dd>
@@ -98,6 +114,7 @@ export default async function ApplicationDetailPage({
 
   const approveAction = decideAction.bind(null, application.id, 'APPROVED');
   const rejectAction = decideAction.bind(null, application.id, 'REJECTED');
+  const boundStartReviewAction = startReviewAction.bind(null, application.id);
 
   return (
     <ApplicationDetailView
@@ -105,6 +122,7 @@ export default async function ApplicationDetailPage({
       documents={documents}
       approveAction={approveAction}
       rejectAction={rejectAction}
+      startReviewAction={boundStartReviewAction}
     />
   );
 }

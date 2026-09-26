@@ -80,7 +80,9 @@
     "detailTitle": "Détail de la demande",
     "approve": "Approuver",
     "reject": "Refuser",
-    "reasonLabel": "Motif"
+    "reasonLabel": "Motif",
+    "viewCase": "Voir le dossier",
+    "startReview": "Commencer l'analyse"
   },
   "documents": {
     "title": "Documents",

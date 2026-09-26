@@ -1,7 +1,7 @@
 import { useTranslations } from 'next-intl';
 import { prisma } from '@/lib/prisma';
 import { listApplications } from '@/lib/applications/list';
-import { statusMessageKey } from '@/lib/status-label';
+import { StatusBadge } from '@/components/StatusBadge';
 import type { ApplicationStatus } from '@prisma/client';
 import { Link } from '@/i18n/navigation';
 
@@ -51,18 +51,25 @@ function CaseListView({
             <th>{t('admin.clientColumn')}</th>
             <th>{t('simulator.amountLabel')}</th>
             <th>{t('admin.statusFilter')}</th>
+            <th />
           </tr>
         </thead>
         <tbody>
           {applications.map((application) => (
             <tr key={application.id} data-testid={`case-row-${application.id}`}>
+              <td>{application.client.firstName} {application.client.lastName}</td>
+              <td>{application.amount}</td>
               <td>
-                <Link href={`/admin/applications/${application.id}`}>
-                  {application.client.firstName} {application.client.lastName}
+                <StatusBadge status={application.status} />
+              </td>
+              <td>
+                <Link
+                  href={`/admin/applications/${application.id}`}
+                  className="rounded-full border border-[var(--color-navy)] px-4 py-1 text-sm font-bold text-[var(--color-navy)]"
+                >
+                  {t('admin.viewCase')}
                 </Link>
               </td>
-              <td>{application.amount}</td>
-              <td>{t(statusMessageKey(application.status))}</td>
             </tr>
           ))}
         </tbody>

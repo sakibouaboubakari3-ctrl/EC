@@ -57,7 +57,7 @@ test('client applies, supervisor approves, client sees the schedule', async ({ b
   // .first(): the case list orders by createdAt desc, so the most recently
   // submitted application (this test's) sorts first even if earlier e2e runs
   // left other "Ada Lovelace" rows in this shared database.
-  await staffPage.getByText('Ada Lovelace').first().click();
+  await staffPage.getByRole('row', { name: /Ada Lovelace/ }).first().getByRole('link').click();
   await staffPage.waitForURL(/\/admin\/applications\//);
   await staffPage.getByRole('button', { name: /approuver/i }).click();
   // The decision form submits via a Next.js Server Action (client-side router
@@ -89,7 +89,7 @@ test('client applies, supervisor rejects, client sees the reason', async ({ brow
   await staffPage.getByRole('button', { name: /se connecter/i }).click();
   await staffPage.waitForURL(/\/admin$/);
 
-  await staffPage.getByText('Ada Lovelace').first().click();
+  await staffPage.getByRole('row', { name: /Ada Lovelace/ }).first().getByRole('link').click();
   await staffPage.waitForURL(/\/admin\/applications\//);
   await staffPage.locator('#reason').fill('Insufficient income');
   await staffPage.getByRole('button', { name: /refuser/i }).click();
