@@ -3,16 +3,16 @@ import { describe, it, expect } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import { NextIntlClientProvider } from 'next-intl';
 import messages from '../../messages/fr.json';
-import LoginPage from '@/app/[locale]/(client)/login/page';
+import { SiteFooter } from '@/components/layout/SiteFooter';
 
-describe('LoginPage', () => {
-  it('renders email and password fields', () => {
+describe('SiteFooter', () => {
+  it('shows the company legal name and NEQ number', () => {
     render(
       <NextIntlClientProvider locale="fr" messages={messages}>
-        <LoginPage />
+        <SiteFooter />
       </NextIntlClientProvider>
     );
-    expect(screen.getByLabelText(messages.auth.email)).toBeInTheDocument();
-    expect(screen.getByLabelText(messages.auth.password)).toBeInTheDocument();
+    expect(screen.getAllByText(/EspaceCredit Inc\./).length).toBeGreaterThan(0);
+    expect(screen.getByText(/1198765432/)).toBeInTheDocument();
   });
 });

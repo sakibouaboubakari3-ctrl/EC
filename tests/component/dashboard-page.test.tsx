@@ -22,7 +22,7 @@ vi.mock('@/lib/prisma', () => ({
   },
 }));
 
-import DashboardPage from '@/app/[locale]/dashboard/page';
+import DashboardPage from '@/app/[locale]/(client)/dashboard/page';
 
 describe('DashboardPage', () => {
   it('shows the schedule when the application is approved', async () => {

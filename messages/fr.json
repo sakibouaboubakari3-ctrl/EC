@@ -2,6 +2,18 @@
   "home": {
     "title": "Bienvenue chez EspaceCredit"
   },
+  "nav": {
+    "login": "Connexion",
+    "dashboard": "Mon dossier",
+    "logout": "Déconnexion",
+    "applyNow": "Faire une demande",
+    "backOffice": "Espace employé",
+    "switchToLanguage": "English"
+  },
+  "footer": {
+    "legalLine": "Le financement qui vous fait avancer.",
+    "neqLabel": "NEQ"
+  },
   "common": {
     "next": "Suivant",
     "back": "Retour",

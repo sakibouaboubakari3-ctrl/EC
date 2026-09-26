@@ -4,14 +4,14 @@ import { render, screen } from '@testing-library/react';
 import { NextIntlClientProvider } from 'next-intl';
 import messages from '../../messages/fr.json';
 
-vi.mock('@/app/[locale]/apply/actions', () => ({
+vi.mock('@/app/[locale]/(client)/apply/actions', () => ({
   getDraftApplicationId: vi.fn().mockResolvedValue('app-1'),
 }));
-vi.mock('@/app/[locale]/apply/employment/actions', () => ({
+vi.mock('@/app/[locale]/(client)/apply/employment/actions', () => ({
   saveEmploymentStepAction: vi.fn(),
 }));
 
-import EmploymentPage from '@/app/[locale]/apply/employment/page';
+import EmploymentPage from '@/app/[locale]/(client)/apply/employment/page';
 
 describe('EmploymentPage', () => {
   it('renders all employment fields', async () => {

@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { upload } from '@vercel/blob/client';
 import { useTranslations } from 'next-intl';
-import { confirmDocumentUploadAction, deleteDocumentAction } from '@/app/[locale]/dashboard/actions';
+import { confirmDocumentUploadAction, deleteDocumentAction } from '@/app/[locale]/(client)/dashboard/actions';
 
 export interface DocumentSummary {
   id: string;

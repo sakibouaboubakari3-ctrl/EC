@@ -1,10 +1,14 @@
 @import "tailwindcss";
 
 :root {
-  --color-navy: #06171E;
-  --color-accent: #80FF4E;
-  --font-serif: "Century Schoolbook", Georgia, serif;
-  --font-sans: Calibri, Inter, sans-serif;
+  /* Sampled directly from public/media/logo-full.png */
+  --color-navy: #032551;
+  --color-navy-light: #053F8A;
+  --color-accent-deep: #1C7630;
+  /* Same hue as the logo's green, lightened for AA contrast under navy text on buttons */
+  --color-accent: #31CE54;
+  --font-sans: var(--font-inter), Inter, ui-sans-serif, system-ui, sans-serif;
+  --font-serif: var(--font-sans);
 }
 
 body {

@@ -2,6 +2,18 @@
   "home": {
     "title": "Welcome to EspaceCredit"
   },
+  "nav": {
+    "login": "Log in",
+    "dashboard": "My application",
+    "logout": "Log out",
+    "applyNow": "Apply now",
+    "backOffice": "Staff portal",
+    "switchToLanguage": "Français"
+  },
+  "footer": {
+    "legalLine": "Financing that moves you forward.",
+    "neqLabel": "Quebec Enterprise Number (NEQ)"
+  },
   "common": {
     "next": "Next",
     "back": "Back",

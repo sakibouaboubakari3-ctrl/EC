@@ -4,14 +4,14 @@ import { render, screen } from '@testing-library/react';
 import { NextIntlClientProvider } from 'next-intl';
 import messages from '../../messages/fr.json';
 
-vi.mock('@/app/[locale]/apply/actions', () => ({
+vi.mock('@/app/[locale]/(client)/apply/actions', () => ({
   getDraftApplicationId: vi.fn().mockResolvedValue('app-1'),
 }));
-vi.mock('@/app/[locale]/apply/personal/actions', () => ({
+vi.mock('@/app/[locale]/(client)/apply/personal/actions', () => ({
   savePersonalStepAction: vi.fn(),
 }));
 
-import PersonalInfoPage from '@/app/[locale]/apply/personal/page';
+import PersonalInfoPage from '@/app/[locale]/(client)/apply/personal/page';
 
 describe('PersonalInfoPage', () => {
   it('renders all personal-info fields', async () => {

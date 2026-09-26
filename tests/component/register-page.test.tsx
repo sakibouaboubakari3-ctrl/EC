@@ -3,7 +3,7 @@ import { describe, it, expect } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import { NextIntlClientProvider } from 'next-intl';
 import messages from '../../messages/fr.json';
-import RegisterPage from '@/app/[locale]/register/page';
+import RegisterPage from '@/app/[locale]/(client)/register/page';
 
 describe('RegisterPage', () => {
   it('renders all required fields', () => {
