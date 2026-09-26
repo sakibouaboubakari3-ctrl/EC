@@ -9,6 +9,8 @@ import {
   AlreadySubmittedError,
   type SubmitResult,
 } from '@/lib/applications/submit';
+import { getEmailClient, getAppUrl } from '@/lib/email/client';
+import { notifyApplicationSubmitted } from '@/lib/email/notifications';
 
 async function requireClientId(): Promise<string> {
   const session = await clientAuth();
@@ -54,5 +56,19 @@ export async function submitApplicationAction(applicationId: string) {
   if (!result.ok) {
     redirect('/apply/review?error=validation');
   }
+
+  try {
+    const client = await prisma.client.findUniqueOrThrow({ where: { id: clientId } });
+    await notifyApplicationSubmitted(getEmailClient(), {
+      clientEmail: client.email,
+      clientName: `${client.firstName} ${client.lastName}`,
+      locale: client.locale === 'en' ? 'en' : 'fr',
+      amount: application.amount,
+      appUrl: getAppUrl(),
+    });
+  } catch (error) {
+    console.error('Failed to send application-submitted email', error);
+  }
+
   redirect('/dashboard');
 }

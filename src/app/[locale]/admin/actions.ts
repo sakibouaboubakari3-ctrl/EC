@@ -5,6 +5,8 @@ import { revalidatePath } from 'next/cache';
 import { prisma } from '@/lib/prisma';
 import { staffAuth } from '@/lib/auth/staff-auth';
 import { decideApplication, ForbiddenError, AlreadyDecidedError } from '@/lib/applications/decide';
+import { getEmailClient, getAppUrl } from '@/lib/email/client';
+import { notifyApplicationDecision } from '@/lib/email/notifications';
 
 export async function decideAction(
   applicationId: string,
@@ -35,6 +37,24 @@ export async function decideAction(
     }
     throw error;
   }
+
+  try {
+    const application = await prisma.loanApplication.findUniqueOrThrow({
+      where: { id: applicationId },
+      include: { client: true },
+    });
+    await notifyApplicationDecision(getEmailClient(), {
+      clientEmail: application.client.email,
+      clientName: `${application.client.firstName} ${application.client.lastName}`,
+      locale: application.client.locale === 'en' ? 'en' : 'fr',
+      decision,
+      reason: reason ?? null,
+      appUrl: getAppUrl(),
+    });
+  } catch (error) {
+    console.error('Failed to send application-decision email', error);
+  }
+
   // The redirect below targets the same route the staff member is already on.
   // Next.js's client-side router cache would otherwise keep serving the
   // pre-decision RSC payload for that route (stale approve/reject buttons)
