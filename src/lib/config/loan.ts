@@ -5,3 +5,12 @@ export const LOAN_TERMS_MONTHS = [6, 12, 24, 36, 48, 60] as const;
 export const DEFAULT_TERM_MONTHS = 36;
 export const ANNUAL_INTEREST_RATE = 0.04;
 export const LOAN_CURRENCY = 'CAD';
+
+// Deducted from the disbursed proceeds, not collected separately or upfront.
+// The client still repays the full approved amount per the schedule; this fee
+// is the cost of the loan, disclosed on the contract alongside the net amount.
+export const ORIGINATION_FEE_RATE = 0.05;
+
+export function calculateNetDisbursement(amount: number): number {
+  return Math.round(amount * (1 - ORIGINATION_FEE_RATE));
+}

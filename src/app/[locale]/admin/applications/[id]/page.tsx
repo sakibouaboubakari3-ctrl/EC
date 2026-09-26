@@ -1,5 +1,5 @@
 import { notFound } from 'next/navigation';
-import { useTranslations } from 'next-intl';
+import { useFormatter, useTranslations } from 'next-intl';
 import { prisma } from '@/lib/prisma';
 import { decideAction, startReviewAction } from '../../actions';
 import { listDocumentsForApplication } from '@/lib/documents/documents';
@@ -11,6 +11,8 @@ interface DetailApplication {
   amount: number;
   termMonths: number;
   status: ApplicationStatus;
+  contractSignedAt: Date | null;
+  disbursementScheduledAt: Date | null;
   client: { email: string };
 }
 
@@ -28,6 +30,7 @@ function ApplicationDetailView({
   startReviewAction: () => Promise<void>;
 }) {
   const t = useTranslations();
+  const format = useFormatter();
   const isDecidable = application.status === 'SUBMITTED' || application.status === 'IN_REVIEW';
 
   return (
@@ -55,6 +58,18 @@ function ApplicationDetailView({
         <dd>{application.amount}</dd>
         <dt>{t('simulator.termLabel')}</dt>
         <dd>{application.termMonths}</dd>
+        {application.contractSignedAt && (
+          <>
+            <dt>{t('contract.signedOn')}</dt>
+            <dd>{format.dateTime(application.contractSignedAt, { dateStyle: 'long' })}</dd>
+          </>
+        )}
+        {application.disbursementScheduledAt && (
+          <>
+            <dt>{t('contract.depositScheduledFor')}</dt>
+            <dd>{format.dateTime(application.disbursementScheduledAt, { dateStyle: 'long' })}</dd>
+          </>
+        )}
       </dl>
       <section className="mt-4">
         <h2 className="font-[family-name:var(--font-serif)] text-lg text-[var(--color-navy)]">

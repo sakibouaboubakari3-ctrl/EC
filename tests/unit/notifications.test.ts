@@ -1,5 +1,9 @@
 import { describe, it, expect, vi } from 'vitest';
-import { notifyApplicationSubmitted, notifyApplicationDecision } from '@/lib/email/notifications';
+import {
+  notifyApplicationSubmitted,
+  notifyApplicationDecision,
+  notifyDepositScheduled,
+} from '@/lib/email/notifications';
 import type { EmailClient } from '@/lib/email/brevo-client';
 
 function fakeClient(): { client: EmailClient; send: ReturnType<typeof vi.fn> } {
@@ -50,5 +54,21 @@ describe('notifyApplicationDecision', () => {
       appUrl: 'https://example.com',
     });
     expect(send.mock.calls[0][0].htmlContent).toContain('Insufficient income');
+  });
+});
+
+describe('notifyDepositScheduled', () => {
+  it('sends the deposit-scheduled email to the client', async () => {
+    const { client, send } = fakeClient();
+    await notifyDepositScheduled(client, {
+      clientEmail: 'ada@example.com',
+      clientName: 'Ada Lovelace',
+      locale: 'fr',
+      netAmount: 95000,
+      scheduledDate: new Date('2026-09-28T00:00:00Z'),
+      appUrl: 'https://example.com',
+    });
+    expect(send).toHaveBeenCalledTimes(1);
+    expect(send.mock.calls[0][0].to).toEqual([{ email: 'ada@example.com', name: 'Ada Lovelace' }]);
   });
 });

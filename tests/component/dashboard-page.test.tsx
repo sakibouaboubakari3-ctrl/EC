@@ -27,8 +27,17 @@ import DashboardPage from '@/app/[locale]/(client)/dashboard/page';
 describe('DashboardPage', () => {
   it('shows the schedule when the application is approved', async () => {
     findFirstMock.mockResolvedValue({
+      id: 'app-1',
       status: 'APPROVED',
       decisionReason: null,
+      amount: 100000,
+      termMonths: 36,
+      rate: 0.04,
+      decidedAt: new Date('2026-03-01'),
+      contractSignedAt: null,
+      disbursementScheduledAt: null,
+      formData: { address: '1 rue Principale', city: 'Montréal', postalCode: 'H1A 1A1' },
+      client: { email: 'ada@example.com', firstName: 'Ada', lastName: 'Lovelace', locale: 'fr' },
       schedule: [{ id: 's1', dueDate: new Date('2026-03-01'), amount: 500 }],
     });
     const Page = await DashboardPage();

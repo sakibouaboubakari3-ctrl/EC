@@ -1,5 +1,9 @@
 import type { EmailClient } from '@/lib/email/brevo-client';
-import { renderApplicationSubmittedEmail, renderApplicationDecisionEmail } from '@/lib/email/templates';
+import {
+  renderApplicationSubmittedEmail,
+  renderApplicationDecisionEmail,
+  renderDepositScheduledEmail,
+} from '@/lib/email/templates';
 
 type Locale = 'fr' | 'en';
 
@@ -49,6 +53,29 @@ export async function notifyApplicationDecision(
       : input.locale === 'fr'
         ? 'Mise à jour de votre demande — EspaceCredit'
         : 'Update on your application — EspaceCredit';
+  await client.send({
+    to: [{ email: input.clientEmail, name: input.clientName }],
+    subject,
+    htmlContent,
+  });
+}
+
+export interface NotifyDepositScheduledInput {
+  clientEmail: string;
+  clientName: string;
+  locale: Locale;
+  netAmount: number;
+  scheduledDate: Date;
+  appUrl: string;
+}
+
+export async function notifyDepositScheduled(
+  client: EmailClient,
+  input: NotifyDepositScheduledInput
+): Promise<void> {
+  const htmlContent = renderDepositScheduledEmail(input);
+  const subject =
+    input.locale === 'fr' ? 'Votre dépôt est prévu — EspaceCredit' : 'Your deposit is scheduled — EspaceCredit';
   await client.send({
     to: [{ email: input.clientEmail, name: input.clientName }],
     subject,

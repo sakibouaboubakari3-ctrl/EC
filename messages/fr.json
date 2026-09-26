@@ -14,6 +14,13 @@
     "legalLine": "Le financement qui vous fait avancer.",
     "neqLabel": "NEQ"
   },
+  "contract": {
+    "title": "Contrat de prêt",
+    "agree": "J'ai lu et j'accepte les termes du contrat de prêt ci-dessus.",
+    "sign": "Signer et accepter",
+    "signedOn": "Contrat signé le",
+    "depositScheduledFor": "Dépôt prévu le"
+  },
   "common": {
     "next": "Suivant",
     "back": "Retour",

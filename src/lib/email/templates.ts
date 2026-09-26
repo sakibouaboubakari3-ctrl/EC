@@ -3,6 +3,10 @@ type Locale = 'fr' | 'en';
 const NAVY = '#032551';
 const ACCENT = '#31CE54';
 
+function formatDate(date: Date, locale: Locale): string {
+  return new Intl.DateTimeFormat(locale === 'fr' ? 'fr-CA' : 'en-CA', { dateStyle: 'long' }).format(date);
+}
+
 function formatAmount(amount: number, locale: Locale): string {
   return new Intl.NumberFormat(locale === 'fr' ? 'fr-CA' : 'en-CA', {
     style: 'currency',
@@ -103,5 +107,27 @@ export function renderApplicationDecisionEmail(input: ApplicationDecisionEmailIn
       : `<p>Hello ${input.clientName},</p>
          <p>We're sorry to inform you that your application has been <strong>rejected</strong>.</p>
          ${reasonLine}`;
+  return emailShell(input.appUrl, body);
+}
+
+export interface DepositScheduledEmailInput {
+  locale: Locale;
+  clientName: string;
+  netAmount: number;
+  scheduledDate: Date;
+  appUrl: string;
+}
+
+export function renderDepositScheduledEmail(input: DepositScheduledEmailInput): string {
+  const amountText = formatAmount(input.netAmount, input.locale);
+  const dateText = formatDate(input.scheduledDate, input.locale);
+  const body =
+    input.locale === 'fr'
+      ? `<p>Bonjour ${input.clientName},</p>
+         <p>Merci d'avoir signé votre contrat. Votre dépôt de <strong>${amountText}</strong> est prévu pour le <strong>${dateText}</strong>.</p>
+         ${button(`${input.appUrl}/fr/dashboard`, 'Voir mon dossier')}`
+      : `<p>Hello ${input.clientName},</p>
+         <p>Thank you for signing your contract. Your deposit of <strong>${amountText}</strong> is scheduled for <strong>${dateText}</strong>.</p>
+         ${button(`${input.appUrl}/en/dashboard`, 'View my application')}`;
   return emailShell(input.appUrl, body);
 }

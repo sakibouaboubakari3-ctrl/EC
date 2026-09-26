@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest';
 import {
   renderApplicationSubmittedEmail,
   renderApplicationDecisionEmail,
+  renderDepositScheduledEmail,
 } from '@/lib/email/templates';
 
 describe('renderApplicationSubmittedEmail', () => {
@@ -53,5 +54,30 @@ describe('renderApplicationDecisionEmail', () => {
     });
     expect(html).toMatch(/refusée/i);
     expect(html).toContain('Insufficient income');
+  });
+});
+
+describe('renderDepositScheduledEmail', () => {
+  it('shows the net amount and scheduled date in French', () => {
+    const html = renderDepositScheduledEmail({
+      locale: 'fr',
+      clientName: 'Ada Lovelace',
+      netAmount: 95000,
+      scheduledDate: new Date('2026-09-28T00:00:00Z'),
+      appUrl: 'https://example.com',
+    });
+    expect(html).toContain('95');
+    expect(html).toMatch(/dépôt/i);
+  });
+
+  it('renders in English when locale is en', () => {
+    const html = renderDepositScheduledEmail({
+      locale: 'en',
+      clientName: 'Ada Lovelace',
+      netAmount: 95000,
+      scheduledDate: new Date('2026-09-28T00:00:00Z'),
+      appUrl: 'https://example.com',
+    });
+    expect(html).toMatch(/deposit/i);
   });
 });
