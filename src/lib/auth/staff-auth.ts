@@ -15,7 +15,7 @@ export const {
   cookies: {
     sessionToken: {
       name: 'staff-session-token',
-      options: { httpOnly: true, sameSite: 'lax', path: '/' },
+      options: { httpOnly: true, sameSite: 'lax', path: '/', secure: process.env.VERCEL === '1' },
     },
   },
   providers: [
