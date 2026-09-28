@@ -2,6 +2,7 @@ import Image from 'next/image';
 import { useTranslations } from 'next-intl';
 import { Link } from '@/i18n/navigation';
 import { LoanSimulator } from '@/components/LoanSimulator';
+import { IconBadge } from '@/components/IconBadge';
 import { ANNUAL_INTEREST_RATE } from '@/lib/config/loan';
 
 export default function HomePage() {
@@ -49,14 +50,17 @@ export default function HomePage() {
         <h2 className="text-2xl font-bold text-[var(--color-navy)] md:text-3xl">{t('problem.title')}</h2>
         <div className="mt-8 grid grid-cols-1 gap-8 md:grid-cols-3">
           <div>
+            <IconBadge icon="clock" />
             <h3 className="font-bold text-[var(--color-navy)]">{t('problem.item1Title')}</h3>
             <p className="mt-2 text-[var(--color-navy)]/80">{t('problem.item1Body')}</p>
           </div>
           <div>
+            <IconBadge icon="documents" />
             <h3 className="font-bold text-[var(--color-navy)]">{t('problem.item2Title')}</h3>
             <p className="mt-2 text-[var(--color-navy)]/80">{t('problem.item2Body')}</p>
           </div>
           <div>
+            <IconBadge icon="hourglass" />
             <h3 className="font-bold text-[var(--color-navy)]">{t('problem.item3Title')}</h3>
             <p className="mt-2 text-[var(--color-navy)]/80">{t('problem.item3Body')}</p>
           </div>

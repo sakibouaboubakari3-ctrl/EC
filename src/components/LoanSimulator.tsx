@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useTranslations } from 'next-intl';
 import {
   MIN_LOAN_AMOUNT,
   MAX_LOAN_AMOUNT,
@@ -9,6 +10,7 @@ import {
   DEFAULT_TERM_MONTHS,
 } from '@/lib/config/loan';
 import { generateAmortizationSchedule } from '@/lib/amortization';
+import { labelClass, inputClass } from '@/lib/ui/classnames';
 
 export interface LoanSimulatorProps {
   initialAmount?: number;
@@ -29,6 +31,7 @@ export function LoanSimulator({
   annualRate,
   onChange,
 }: LoanSimulatorProps) {
+  const t = useTranslations('simulator');
   const [amount, setAmount] = useState(initialAmount);
   const [termMonths, setTermMonths] = useState(initialTermMonths);
 
@@ -53,8 +56,8 @@ export function LoanSimulator({
 
   return (
     <div className="rounded-2xl bg-white p-6 shadow-sm" data-testid="loan-simulator">
-      <label htmlFor="amount-slider" className="font-[family-name:var(--font-serif)] text-lg text-[var(--color-navy)]">
-        {`${currencyFormatter.format(MIN_LOAN_AMOUNT)} - ${currencyFormatter.format(MAX_LOAN_AMOUNT)}`}
+      <label htmlFor="amount-slider" className={labelClass}>
+        {t('amountLabel')} — {`${currencyFormatter.format(MIN_LOAN_AMOUNT)} - ${currencyFormatter.format(MAX_LOAN_AMOUNT)}`}
       </label>
       <input
         id="amount-slider"
@@ -66,7 +69,7 @@ export function LoanSimulator({
         step={5000}
         value={amount}
         onChange={(e) => updateAmount(Number(e.target.value))}
-        className="w-full"
+        className="mt-2 w-full accent-[var(--color-accent-deep)]"
       />
       <input
         id="amount-input"
@@ -77,14 +80,17 @@ export function LoanSimulator({
         value={amount}
         onChange={(e) => updateAmount(Number(e.target.value))}
         onBlur={(e) => updateAmount(Number(e.target.value))}
-        className="mt-2 w-full rounded border px-3 py-2"
+        className={`mt-2 ${inputClass}`}
       />
+      <label htmlFor="term-select" className={`mt-4 block ${labelClass}`}>
+        {t('termLabel')}
+      </label>
       <select
         id="term-select"
         aria-label="term-select"
         value={termMonths}
         onChange={(e) => updateTerm(Number(e.target.value))}
-        className="mt-2 w-full rounded border px-3 py-2"
+        className={`mt-2 ${inputClass}`}
       >
         {LOAN_TERMS_MONTHS.map((term) => (
           <option key={term} value={term}>
@@ -92,9 +98,11 @@ export function LoanSimulator({
           </option>
         ))}
       </select>
-      <p data-testid="monthly-payment" className="mt-4 text-xl font-bold text-[var(--color-navy)]">
+      <p className={`mt-4 ${labelClass}`}>{t('monthlyPayment')}</p>
+      <p data-testid="monthly-payment" className="text-2xl font-bold text-[var(--color-navy)]">
         {currencyFormatter.format(monthlyPayment)}
       </p>
+      <p className="mt-2 text-xs text-[var(--color-navy)]/60">{t('feeDisclosure')}</p>
     </div>
   );
 }

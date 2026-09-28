@@ -1,4 +1,9 @@
 {
+  "metadata": {
+    "titleDefault": "EspaceCredit — Fast financing from $20,000 to $500,000",
+    "titleTemplate": "%s | EspaceCredit",
+    "description": "Personal and business loans from $20,000 to $500,000 CAD. A decision within 24 hours, a fully online process, no endless paperwork. Apply now."
+  },
   "home": {
     "title": "Welcome to EspaceCredit",
     "hero": {
@@ -7,7 +12,7 @@
       "subheadline": "A decision within 24 hours, a fully online process, no endless paperwork.",
       "ctaPrimary": "Apply now",
       "ctaSecondary": "Simulate my loan",
-      "imageAlt": "Two smiling business owners in front of their shop, holding a 'Yes we're open' sign"
+      "imageAlt": "A couple reviewing renovation plans in a room under construction"
     },
     "problem": {
       "title": "Traditional banks don't move at your pace.",
@@ -68,8 +73,9 @@
   },
   "simulator": {
     "amountLabel": "Loan amount",
-    "termLabel": "Term",
-    "monthlyPayment": "Estimated monthly payment"
+    "termLabel": "Term (months)",
+    "monthlyPayment": "Estimated monthly payment",
+    "feeDisclosure": "A 5% origination fee is deducted from the net deposit — no other fees apply."
   },
   "auth": {
     "loginTitle": "Log in",

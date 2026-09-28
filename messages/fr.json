@@ -1,4 +1,9 @@
 {
+  "metadata": {
+    "titleDefault": "EspaceCredit — Financement rapide de 20 000 $ à 500 000 $",
+    "titleTemplate": "%s | EspaceCredit",
+    "description": "Prêts personnels et commerciaux de 20 000 $ à 500 000 $ CAD. Réponse en 24 heures, processus entièrement en ligne, sans paperasse interminable. Faites une demande dès maintenant."
+  },
   "home": {
     "title": "Bienvenue chez EspaceCredit",
     "hero": {
@@ -7,7 +12,7 @@
       "subheadline": "Une réponse en 24 heures, un processus entièrement en ligne, sans paperasse interminable.",
       "ctaPrimary": "Faire une demande",
       "ctaSecondary": "Simuler mon prêt",
-      "imageAlt": "Deux entrepreneurs souriants devant leur commerce, tenant une pancarte « Yes we're open »"
+      "imageAlt": "Un couple qui consulte des plans de rénovation dans une pièce en travaux"
     },
     "problem": {
       "title": "Les banques traditionnelles n'avancent pas à votre rythme.",
@@ -68,8 +73,9 @@
   },
   "simulator": {
     "amountLabel": "Montant du prêt",
-    "termLabel": "Durée",
-    "monthlyPayment": "Mensualité estimée"
+    "termLabel": "Durée (mois)",
+    "monthlyPayment": "Mensualité estimée",
+    "feeDisclosure": "Des frais de dossier de 5 % sont déduits du dépôt net — aucun autre frais n'est appliqué."
   },
   "auth": {
     "loginTitle": "Connexion",

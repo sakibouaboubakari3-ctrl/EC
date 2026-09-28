@@ -4,6 +4,13 @@ import { prisma } from '@/lib/prisma';
 import { decideAction, startReviewAction } from '../../actions';
 import { listDocumentsForApplication } from '@/lib/documents/documents';
 import { StatusBadge } from '@/components/StatusBadge';
+import {
+  pageShellClass,
+  labelClass,
+  inputClass,
+  primaryButtonClass,
+  secondaryButtonClass,
+} from '@/lib/ui/classnames';
 import type { ApplicationStatus } from '@prisma/client';
 
 interface DetailApplication {
@@ -11,6 +18,7 @@ interface DetailApplication {
   amount: number;
   termMonths: number;
   status: ApplicationStatus;
+  decisionReason: string | null;
   contractSignedAt: Date | null;
   disbursementScheduledAt: Date | null;
   client: { email: string };
@@ -34,81 +42,107 @@ function ApplicationDetailView({
   const isDecidable = application.status === 'SUBMITTED' || application.status === 'IN_REVIEW';
 
   return (
-    <main className="p-8" data-testid="application-detail">
-      <div className="flex items-center justify-between">
-        <h1 className="font-[family-name:var(--font-serif)] text-2xl text-[var(--color-navy)]">
-          {t('admin.detailTitle')}
-        </h1>
-        <StatusBadge status={application.status} />
-      </div>
-      {application.status === 'SUBMITTED' && (
-        <form action={startReviewAction} className="mt-4">
-          <button
-            type="submit"
-            className="rounded-full border border-[var(--color-navy)] px-6 py-2 font-bold text-[var(--color-navy)]"
-          >
-            {t('admin.startReview')}
-          </button>
-        </form>
-      )}
-      <dl className="mt-4 grid grid-cols-2 gap-2">
-        <dt>{t('auth.email')}</dt>
-        <dd>{application.client.email}</dd>
-        <dt>{t('simulator.amountLabel')}</dt>
-        <dd>{application.amount}</dd>
-        <dt>{t('simulator.termLabel')}</dt>
-        <dd>{application.termMonths}</dd>
-        {application.contractSignedAt && (
-          <>
-            <dt>{t('contract.signedOn')}</dt>
-            <dd>{format.dateTime(application.contractSignedAt, { dateStyle: 'long' })}</dd>
-          </>
-        )}
-        {application.disbursementScheduledAt && (
-          <>
-            <dt>{t('contract.depositScheduledFor')}</dt>
-            <dd>{format.dateTime(application.disbursementScheduledAt, { dateStyle: 'long' })}</dd>
-          </>
-        )}
-      </dl>
-      <section className="mt-4">
-        <h2 className="font-[family-name:var(--font-serif)] text-lg text-[var(--color-navy)]">
-          {t('documents.title')}
-        </h2>
-        <ul>
-          {documents.map((document) => (
-            <li key={document.id}>
-              <a href={`/api/documents/${document.id}/download`}>
-                {document.type} — {document.originalFilename}
-              </a>
-            </li>
-          ))}
-        </ul>
-      </section>
-      {isDecidable && (
-        <div className="mt-6 flex gap-4">
-          <form action={approveAction}>
-            <button
-              type="submit"
-              className="rounded-full bg-[var(--color-accent)] px-6 py-2 font-bold text-[var(--color-navy)]"
-            >
-              {t('admin.approve')}
-            </button>
-          </form>
-          <form action={rejectAction} className="flex items-end gap-2">
-            <div className="flex flex-col">
-              <label htmlFor="reason">{t('admin.reasonLabel')}</label>
-              <input id="reason" name="reason" required />
+    <main className={pageShellClass} data-testid="application-detail">
+      <div className="mx-auto max-w-3xl space-y-4">
+        <div className="rounded-2xl bg-white p-4 shadow-sm sm:p-6">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <h1 className="text-2xl font-bold text-[var(--color-navy)]">{t('admin.detailTitle')}</h1>
+            <StatusBadge status={application.status} />
+          </div>
+          {application.status === 'SUBMITTED' && (
+            <form action={startReviewAction} className="mt-4">
+              <button type="submit" className={`w-full sm:w-auto ${secondaryButtonClass}`}>
+                {t('admin.startReview')}
+              </button>
+            </form>
+          )}
+          <dl className="mt-4 grid grid-cols-1 gap-x-6 gap-y-3 sm:grid-cols-2">
+            <div>
+              <dt className="text-xs text-[var(--color-navy)]/60">{t('auth.email')}</dt>
+              <dd className="font-medium text-[var(--color-navy)]">{application.client.email}</dd>
             </div>
-            <button
-              type="submit"
-              className="rounded-full border border-[var(--color-navy)] px-6 py-2 font-bold text-[var(--color-navy)]"
-            >
-              {t('admin.reject')}
-            </button>
-          </form>
+            <div>
+              <dt className="text-xs text-[var(--color-navy)]/60">{t('simulator.amountLabel')}</dt>
+              <dd className="font-medium text-[var(--color-navy)]">
+                {application.amount.toLocaleString('fr-CA')} $
+              </dd>
+            </div>
+            <div>
+              <dt className="text-xs text-[var(--color-navy)]/60">{t('simulator.termLabel')}</dt>
+              <dd className="font-medium text-[var(--color-navy)]">{application.termMonths}</dd>
+            </div>
+            {application.status === 'REJECTED' && application.decisionReason && (
+              <div className="sm:col-span-2">
+                <dt className="text-xs text-[var(--color-navy)]/60">{t('admin.reasonLabel')}</dt>
+                <dd className="font-medium text-[var(--color-navy)]">{application.decisionReason}</dd>
+              </div>
+            )}
+            {application.contractSignedAt && (
+              <div>
+                <dt className="text-xs text-[var(--color-navy)]/60">{t('contract.signedOn')}</dt>
+                <dd className="font-medium text-[var(--color-navy)]">
+                  {format.dateTime(application.contractSignedAt, { dateStyle: 'long' })}
+                </dd>
+              </div>
+            )}
+            {application.disbursementScheduledAt && (
+              <div>
+                <dt className="text-xs text-[var(--color-navy)]/60">{t('contract.depositScheduledFor')}</dt>
+                <dd className="font-medium text-[var(--color-navy)]">
+                  {format.dateTime(application.disbursementScheduledAt, { dateStyle: 'long' })}
+                </dd>
+              </div>
+            )}
+          </dl>
         </div>
-      )}
+
+        <section className="rounded-2xl bg-white p-4 shadow-sm sm:p-6">
+          <h2 className="text-lg font-bold text-[var(--color-navy)]">{t('documents.title')}</h2>
+          {documents.length === 0 ? (
+            <p className="mt-2 text-sm text-[var(--color-navy)]/60">{t('documents.noFile')}</p>
+          ) : (
+            <ul className="mt-2 divide-y divide-[var(--color-navy)]/5">
+              {documents.map((document) => (
+                <li key={document.id} className="flex items-center justify-between py-2">
+                  <span className="text-sm text-[var(--color-navy)]">
+                    {document.type} — {document.originalFilename}
+                  </span>
+                  <a
+                    href={`/api/documents/${document.id}/download`}
+                    className="text-sm font-bold text-[var(--color-accent-deep)] underline"
+                    aria-label={document.originalFilename}
+                  >
+                    ⬇
+                  </a>
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
+
+        {isDecidable && (
+          <div className="rounded-2xl bg-white p-4 shadow-sm sm:p-6">
+            <div className="flex flex-col gap-4 sm:flex-row">
+              <form action={approveAction} className="flex-1">
+                <button type="submit" className={`w-full ${primaryButtonClass}`}>
+                  ✓ {t('admin.approve')}
+                </button>
+              </form>
+              <form action={rejectAction} className="flex flex-1 flex-col gap-2">
+                <div className="flex flex-col gap-1">
+                  <label htmlFor="reason" className={labelClass}>
+                    {t('admin.reasonLabel')}
+                  </label>
+                  <input id="reason" name="reason" required className={inputClass} />
+                </div>
+                <button type="submit" className={`w-full ${secondaryButtonClass}`}>
+                  ✕ {t('admin.reject')}
+                </button>
+              </form>
+            </div>
+          </div>
+        )}
+      </div>
     </main>
   );
 }
